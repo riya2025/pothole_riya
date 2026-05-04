@@ -1,0 +1,37 @@
+import React from "react";
+import { issueColor, issueIcon, formatDate } from "../utils/helpers";
+import { Report } from "../types";
+
+interface IssueMarkerProps {
+    issue: any; // using any since it merges data for dashboard display
+    onShare?: (issue: any) => void;
+}
+
+export default function IssueMarker({ issue, onShare }: IssueMarkerProps) {
+    const color = issueColor(issue.type);
+
+    return (
+        <div className="issue-card" style={{ borderLeft: `4px solid ${color}` }}>
+            <div className="issue-card-header">
+                <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
+                    {issueIcon(issue.type)} {issue.type}
+                </span>
+                <span className={`status-badge status-${issue.status}`}>{issue.status}</span>
+            </div>
+            <p className="issue-address">📍 {issue.address || "Unknown location"}</p>
+            <div className="issue-meta">
+                <span>📊 {issue.report_count} report{issue.report_count !== 1 ? "s" : ""}</span>
+                <span>🕐 {formatDate(issue.created_at)}</span>
+            </div>
+            {onShare && (
+                <button
+                    className="btn-share"
+                    onClick={() => onShare(issue)}
+                    style={{ borderColor: color, color }}
+                >
+                    🐦 Share on Twitter
+                </button>
+            )}
+        </div>
+    );
+}

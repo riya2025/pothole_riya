@@ -1,0 +1,38 @@
+import React, { createContext, useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import ReportIssue from "./pages/ReportIssue";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { getCurrentUser } from "./utils/helpers";
+import "./index.css";
+
+export const AuthContext = createContext(null);
+
+export default function App() {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const u = getCurrentUser();
+        if (u) setUser(u);
+    }, []);
+
+    return (
+        <AuthContext.Provider value={{ user, setUser }}>
+            <BrowserRouter>
+                <Navbar />
+                <main className="main-content">
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/report" element={<ReportIssue />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                    </Routes>
+                </main>
+            </BrowserRouter>
+        </AuthContext.Provider>
+    );
+}
