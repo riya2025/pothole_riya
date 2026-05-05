@@ -12,6 +12,7 @@ export interface Issue {
     report_count: number;
     lat: number | null;
     lng: number | null;
+    city: string;
     created_at: string;
 }
 

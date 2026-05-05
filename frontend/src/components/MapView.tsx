@@ -14,9 +14,10 @@ L.Icon.Default.mergeOptions({
 
 interface MapViewProps {
     issues?: Issue[];
+    mapCenter?: [number, number];
 }
 
-export default function MapView({ issues = [] }: MapViewProps) {
+export default function MapView({ issues = [], mapCenter = [17.385, 78.4867] }: MapViewProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markersRef = useRef<any>(null);
@@ -25,7 +26,7 @@ export default function MapView({ issues = [] }: MapViewProps) {
         if (mapInstanceRef.current || !mapRef.current) return;
 
         const map = L.map(mapRef.current, {
-            center: [17.385, 78.4867],
+            center: mapCenter,
             zoom: 12,
         });
 
@@ -41,6 +42,13 @@ export default function MapView({ issues = [] }: MapViewProps) {
         markersRef.current = mcg;
         map.addLayer(mcg);
     }, []);
+
+    // Effect to update map center when the `mapCenter` prop changes
+    useEffect(() => {
+        if (mapInstanceRef.current && mapCenter) {
+            mapInstanceRef.current.setView(mapCenter, 12);
+        }
+    }, [mapCenter]);
 
     useEffect(() => {
         const map = mapInstanceRef.current;

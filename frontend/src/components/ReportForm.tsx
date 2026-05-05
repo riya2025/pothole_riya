@@ -29,6 +29,7 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
             try {
                 const gps = await exifr.gps(file);
                 if (gps && gps.latitude && gps.longitude) {
+                    console.log("📍 EXIF Location detected:", gps);
                     setCoords({ lat: gps.latitude, lng: gps.longitude });
                     setSuccess({ type: "Location", status: "extracted", alertMsg: "Location successfully extracted from image metadata!" });
                     setError("");
@@ -129,9 +130,23 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
 
                 <div className="form-group">
                     <label className="form-label">Location *</label>
-                    <button type="button" className="btn-locate" onClick={getLocation} disabled={locating}>
-                        {locating ? "📍 Locating…" : coords ? "✅ Location Captured" : "📍 Capture My Location"}
-                    </button>
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                        <button type="button" className="btn-locate" onClick={getLocation} disabled={locating} style={{ flex: 1 }}>
+                            {locating ? "📍 Locating…" : coords ? "✅ Location Captured" : "📍 Capture My Location"}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => {
+                                setCoords({ lat: 12.9716, lng: 77.5946 });
+                                setError("");
+                            }}
+                            title="Set to Bangalore (Testing)"
+                            style={{ padding: "0 15px", borderRadius: "8px", minHeight: "44px" }}
+                        >
+                            📍 Bangalore
+                        </button>
+                    </div>
                     {coords && (
                         <p className="coords-text">
                             📌 {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}

@@ -11,6 +11,7 @@ class IssueOut(BaseModel):
     report_count: int
     lat: Optional[float] = None
     lng: Optional[float] = None
+    city: str
     created_at: datetime
 
     class Config:

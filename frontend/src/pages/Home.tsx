@@ -9,6 +9,8 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
 
+    const [mapCenter, setMapCenter] = useState<[number, number]>([17.385, 78.4867]);
+
     useEffect(() => {
         getAllIssues()
             .then((res) => setIssues(res.data))
@@ -18,22 +20,37 @@ export default function Home() {
 
     const filtered = filter === "all" ? issues : issues.filter((i) => i.type === filter);
 
-    const counts: Record<string, number> = ["pothole", "garbage", "streetlight", "other"].reduce((acc, t) => {
-        acc[t] = issues.filter((i) => i.type === t).length;
-        return acc;
-    }, {} as Record<string, number>);
+    const cityStats = ["hyderabad", "bangalore"].map((city) => ({
+        city,
+        pothole: issues.filter((i) => i.city === city && i.type === "pothole").length,
+        streetlight: issues.filter((i) => i.city === city && i.type === "streetlight").length,
+        garbage: issues.filter((i) => i.city === city && i.type === "garbage").length,
+    }));
 
     return (
         <div className="home-page">
             <div className="stats-bar">
-                <div className="stat-item">
+                <div className="stat-item total">
                     <span className="stat-number">{issues.length}</span>
-                    <span className="stat-label">Total Issues</span>
+                    <span className="stat-label">Total Reports</span>
                 </div>
-                {Object.entries(counts).map(([type, count]) => (
-                    <div key={type} className="stat-item" style={{ borderColor: issueColor(type) }}>
-                        <span className="stat-number" style={{ color: issueColor(type) }}>{count}</span>
-                        <span className="stat-label">{issueIcon(type)} {type}</span>
+                {cityStats.map((cs) => (
+                    <div key={cs.city} className="city-stats-group">
+                        <div className="city-label">{cs.city === "hyderabad" ? "📍 HYD" : "📍 BLR"}</div>
+                        <div className="city-counts">
+                            <div className="stat-item mini" style={{ borderColor: issueColor("pothole") }}>
+                                <span className="stat-number" style={{ color: issueColor("pothole") }}>{cs.pothole}</span>
+                                <span className="stat-label">{issueIcon("pothole")} Potholes</span>
+                            </div>
+                            <div className="stat-item mini" style={{ borderColor: issueColor("streetlight") }}>
+                                <span className="stat-number" style={{ color: issueColor("streetlight") }}>{cs.streetlight}</span>
+                                <span className="stat-label">{issueIcon("streetlight")} Streetlights</span>
+                            </div>
+                            <div className="stat-item mini" style={{ borderColor: issueColor("garbage") }}>
+                                <span className="stat-number" style={{ color: issueColor("garbage") }}>{cs.garbage}</span>
+                                <span className="stat-label">{issueIcon("garbage")} Garbage</span>
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -51,6 +68,22 @@ export default function Home() {
                 ))}
             </div>
 
+            <div className="filter-bar" style={{ marginTop: "10px" }}>
+                <span style={{ fontSize: "14px", fontWeight: "bold", margin: "auto 10px auto 0" }}>City:</span>
+                <button
+                    className={`filter-chip ${mapCenter[0] === 17.385 ? "active" : ""}`}
+                    onClick={() => setMapCenter([17.385, 78.4867])}
+                >
+                    📍 Hyderabad
+                </button>
+                <button
+                    className={`filter-chip ${mapCenter[0] === 12.9716 ? "active" : ""}`}
+                    onClick={() => setMapCenter([12.9716, 77.5946])}
+                >
+                    📍 Bangalore
+                </button>
+            </div>
+
             <div className="map-wrapper">
                 {loading ? (
                     <div className="map-loading">
@@ -58,7 +91,7 @@ export default function Home() {
                         <p>Loading issues…</p>
                     </div>
                 ) : (
-                    <MapView issues={filtered} />
+                    <MapView issues={filtered} mapCenter={mapCenter} />
                 )}
             </div>
         </div>

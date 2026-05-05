@@ -18,14 +18,12 @@ async def report_issue(
     latitude: float = Form(...),
     longitude: float = Form(...),
     image: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
     image_bytes = await image.read() if image else None
     image_filename = image.filename if image else None
 
     result = await handle_report(
-        db=db,
         description=description,
         lat=latitude,
         lng=longitude,
@@ -37,21 +35,34 @@ async def report_issue(
 
 
 @router.get("", response_model=List[IssueOut])
-def get_issues(db: Session = Depends(get_db)):
-    issues = get_all_issues(db)
-    result = []
-    for issue in issues:
-        lat, lng = get_issue_lat_lng(issue)
-        result.append(
-            IssueOut(
-                id=issue.id,
-                type=issue.type,
-                status=issue.status,
-                address=issue.address,
-                report_count=issue.report_count,
-                lat=lat,
-                lng=lng,
-                created_at=issue.created_at,
-            )
-        )
-    return result
+def get_issues():
+    from app.database import sessions
+    
+    all_issues = []
+    
+    # Query both city databases
+    for city in ["hyderabad", "bangalore"]:
+        db = sessions[city]()
+        try:
+            issues = get_all_issues(db)
+            for issue in issues:
+                lat, lng = get_issue_lat_lng(issue)
+                all_issues.append(
+                    IssueOut(
+                        id=issue.id,
+                        type=issue.type,
+                        status=issue.status,
+                        address=issue.address,
+                        report_count=issue.report_count,
+                        lat=lat,
+                        lng=lng,
+                        city=city,
+                        created_at=issue.created_at,
+                    )
+                )
+        finally:
+            db.close()
+            
+    # Sort by created_at descending if needed
+    all_issues.sort(key=lambda x: x.created_at, reverse=True)
+    return all_issues
