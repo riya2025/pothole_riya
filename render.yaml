@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: civic-issue-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    rootContext: backend
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./civic.db
+      - key: POSTGRES_URL
+        sync: false # Set this in Render dashboard (Supabase URL)
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false

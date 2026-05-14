@@ -2,15 +2,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+from app.config import settings
 
-# SQLite configuration
-CONNECT_ARGS = {"check_same_thread": False}
-
+# Database configuration
 DATABASE_URLS = {
-    "users": "sqlite:///./users.db",
-    "hyderabad": "sqlite:///./hyderabad.db",
-    "bangalore": "sqlite:///./bangalore.db",
+    "users": settings.POSTGRES_URL or "sqlite:///./users.db",
+    "hyderabad": settings.POSTGRES_URL or "sqlite:///./hyderabad.db",
+    "bangalore": settings.POSTGRES_URL or "sqlite:///./bangalore.db",
 }
+
+# SQLite specific check_same_thread
+CONNECT_ARGS = {}
+if not settings.POSTGRES_URL:
+    CONNECT_ARGS = {"check_same_thread": False}
 
 engines = {k: create_engine(v, connect_args=CONNECT_ARGS) for k, v in DATABASE_URLS.items()}
 sessions = {k: sessionmaker(autocommit=False, autoflush=False, bind=v) for k, v in engines.items()}
