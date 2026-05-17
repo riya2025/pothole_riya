@@ -20,12 +20,18 @@ def get_user_issues(
     from app.database import sessions
     
     all_reports = []
+    seen_issues = set()
     
-    for city in ["hyderabad", "bangalore"]:
+    for city in ["hyderabad", "bangalore", "users"]:
+        if city not in sessions: continue
         db = sessions[city]()
         try:
             reports = get_reports_by_user(db, user_id)
             for report in reports:
+                if report.issue_id in seen_issues:
+                    continue
+                seen_issues.add(report.issue_id)
+                
                 issue: Issue = db.query(Issue).filter(Issue.id == report.issue_id).first()
                 if not issue:
                     continue
