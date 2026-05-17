@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import AdminIssues from "./pages/AdminIssues";
 import Dashboard from "./pages/Dashboard";
+import MyReports from "./pages/MyReports";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { getCurrentUser } from "./utils/helpers";
@@ -37,6 +38,7 @@ export default function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/admin-issues" element={<AdminIssues />} />
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/my-reports" element={<MyReports />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                     </Routes>

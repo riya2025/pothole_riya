@@ -5,13 +5,16 @@ import { Report } from "../types";
 interface IssueMarkerProps {
     issue: any; // using any since it merges data for dashboard display
     onShare?: (issue: any) => void;
+    onClick?: (issue: any) => void;
 }
 
-export default function IssueMarker({ issue, onShare }: IssueMarkerProps) {
+export default function IssueMarker({ issue, onShare, onClick }: IssueMarkerProps) {
     const color = issueColor(issue.type);
 
     return (
-        <div className="issue-card" style={{ borderLeft: `4px solid ${color}` }}>
+        <div className="issue-card"
+            style={{ borderLeft: `4px solid ${color}`, cursor: onClick ? 'pointer' : 'default' }}
+            onClick={() => onClick && onClick(issue)}>
             <div className="issue-card-header">
                 <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
                     {issueIcon(issue.type)} {issue.type}

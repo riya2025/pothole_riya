@@ -35,7 +35,12 @@ export default function Navbar() {
                         {navLink("/admin-issues", "📋 All Reports")}
                     </>
                 )}
-                {user && navLink("/dashboard", "📋 Dashboard (My Reports)")}
+                {user && (
+                    <>
+                        {navLink("/dashboard", "📋 Report Issue")}
+                        {navLink("/my-reports", "📊 My Reports")}
+                    </>
+                )}
             </div>
             <div className="nav-actions">
                 {user ? (

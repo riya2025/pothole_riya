@@ -18,6 +18,7 @@ export default function AdminIssues() {
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
+    const [selectedIssue, setSelectedIssue] = useState<any>(null);
 
     useEffect(() => {
         getAllIssues()
@@ -45,8 +46,45 @@ export default function AdminIssues() {
             ) : (
                 <div className="issues-grid" style={{ padding: '0 32px', paddingBottom: '40px' }}>
                     {filtered.map((r: any) => (
-                        <IssueMarker key={r.report_id || r.issue_id || r.id} issue={r} />
+                        <IssueMarker
+                            key={r.report_id || r.issue_id || r.id}
+                            issue={r}
+                            onClick={(issue) => setSelectedIssue(issue)}
+                        />
                     ))}
+                </div>
+            )}
+
+            {selectedIssue && (
+                <div className="modal-overlay" onClick={() => setSelectedIssue(null)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setSelectedIssue(null)}>×</button>
+                        <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 800 }}>Issue Details</h2>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div>
+                                <strong style={{ color: 'var(--text-secondary)' }}>Type:</strong> <br />
+                                <span style={{ textTransform: 'capitalize' }}>{selectedIssue.type}</span>
+                            </div>
+                            <div>
+                                <strong style={{ color: 'var(--text-secondary)' }}>Status:</strong> <br />
+                                <span style={{ textTransform: 'capitalize' }}>{selectedIssue.status}</span>
+                            </div>
+                            <div>
+                                <strong style={{ color: 'var(--text-secondary)' }}>Location:</strong> <br />
+                                <span>{selectedIssue.address || "Unknown"}</span>
+                            </div>
+                            {selectedIssue.description && (
+                                <div>
+                                    <strong style={{ color: 'var(--text-secondary)' }}>Description:</strong> <br />
+                                    <span>{selectedIssue.description}</span>
+                                </div>
+                            )}
+                            <div>
+                                <strong style={{ color: 'var(--text-secondary)' }}>Report Count:</strong> <br />
+                                <span>{selectedIssue.report_count}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
