@@ -37,31 +37,34 @@ async def report_issue(
 @router.get("", response_model=List[IssueOut])
 def get_issues():
     from app.database import sessions
+    from app.services.issue_service import get_city_from_coords
     
     all_issues = []
     
-    # Query both city databases
-    for city in ["hyderabad", "bangalore"]:
-        db = sessions[city]()
-        try:
-            issues = get_all_issues(db)
-            for issue in issues:
-                lat, lng = get_issue_lat_lng(issue)
-                all_issues.append(
-                    IssueOut(
-                        id=issue.id,
-                        type=issue.type,
-                        status=issue.status,
-                        address=issue.address,
-                        report_count=issue.report_count,
-                        lat=lat,
-                        lng=lng,
-                        city=city,
-                        created_at=issue.created_at,
-                    )
+    # Since Postgres combines all cities into one DB, we just query once
+    db = sessions["users"]()
+    try:
+        issues = get_all_issues(db)
+        for issue in issues:
+            lat, lng = get_issue_lat_lng(issue)
+            # Dynamically attach the city based on the issue's coordinates
+            city = get_city_from_coords(lat, lng) if lat and lng else "hyderabad"
+            
+            all_issues.append(
+                IssueOut(
+                    id=issue.id,
+                    type=issue.type,
+                    status=issue.status,
+                    address=issue.address,
+                    report_count=issue.report_count,
+                    lat=lat,
+                    lng=lng,
+                    city=city,
+                    created_at=issue.created_at,
                 )
-        finally:
-            db.close()
+            )
+    finally:
+        db.close()
             
     # Sort by created_at descending if needed
     all_issues.sort(key=lambda x: x.created_at, reverse=True)
