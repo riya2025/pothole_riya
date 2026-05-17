@@ -29,8 +29,13 @@ export default function Navbar() {
                 <span className="brand-name">CivicWatch</span>
             </div>
             <div className="nav-links">
-                {!user && navLink("/", "🗺️ Admin Dashboard")}
-                {user && navLink("/dashboard", "📋 Report Issue")}
+                {!user && (
+                    <>
+                        {navLink("/", "🗺️ Map View")}
+                        {navLink("/admin-issues", "📋 All Reports")}
+                    </>
+                )}
+                {user && navLink("/dashboard", "📋 Dashboard (My Reports)")}
             </div>
             <div className="nav-actions">
                 {user ? (

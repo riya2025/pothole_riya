@@ -534,16 +534,9 @@ a:hover {
   overflow: hidden;
 }
 
-/* ── Leaflet Dark Mode Filter ────────────────────────────────────────── */
-.leaflet-layer,
-.leaflet-control-zoom-in,
-.leaflet-control-zoom-out,
-.leaflet-control-attribution {
-  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
-}
-
+/* ── Leaflet Default Filter ────────────────────────────────────────── */
 .leaflet-container {
-  background: var(--bg-primary) !important;
+  background: #f8f9fa !important;
 }
 
 .map-loading {

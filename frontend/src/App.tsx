@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
+import AdminIssues from "./pages/AdminIssues";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -34,6 +35,7 @@ export default function App() {
                 <main className="main-content">
                     <Routes>
                         <Route path="/" element={<Home />} />
+                        <Route path="/admin-issues" element={<AdminIssues />} />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
