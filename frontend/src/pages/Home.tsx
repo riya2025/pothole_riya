@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../App";
 import MapView from "../components/MapView";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor } from "../utils/helpers";
 import { Issue } from "../types";
 
 export default function Home() {
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            navigate("/dashboard");
+        }
+    }, [user, navigate]);
+
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
