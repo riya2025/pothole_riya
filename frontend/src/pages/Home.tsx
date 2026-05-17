@@ -22,6 +22,7 @@ export default function Home() {
 
     const cityStats = ["hyderabad", "bangalore"].map((city) => ({
         city,
+        total: issues.filter((i) => i.city === city).length,
         pothole: issues.filter((i) => i.city === city && i.type === "pothole").length,
         streetlight: issues.filter((i) => i.city === city && i.type === "streetlight").length,
         garbage: issues.filter((i) => i.city === city && i.type === "garbage").length,
@@ -38,6 +39,10 @@ export default function Home() {
                     <div key={cs.city} className="city-stats-group">
                         <div className="city-label">{cs.city === "hyderabad" ? "📍 HYD" : "📍 BLR"}</div>
                         <div className="city-counts">
+                            <div className="stat-item mini" style={{ borderColor: "#a78bfa" }}>
+                                <span className="stat-number" style={{ color: "#a78bfa" }}>{cs.total}</span>
+                                <span className="stat-label">Total</span>
+                            </div>
                             <div className="stat-item mini" style={{ borderColor: issueColor("pothole") }}>
                                 <span className="stat-number" style={{ color: issueColor("pothole") }}>{cs.pothole}</span>
                                 <span className="stat-label">{issueIcon("pothole")} Potholes</span>
