@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../App";
 import { getUserIssues, generateShare } from "../services/api";
 import IssueMarker from "../components/IssueMarker";
+import ReportForm from "../components/ReportForm";
 import { buildTweetUrl } from "../utils/helpers";
 import { useNavigate } from "react-router-dom";
 
@@ -31,9 +32,20 @@ export default function Dashboard() {
         }
     };
 
+    const fetchIssues = () => {
+        if (!user) return;
+        getUserIssues(user.id)
+            .then((res) => setReports(res.data))
+            .catch(console.error);
+    };
+
     return (
         <div className="dashboard-page">
-            <div className="dashboard-header">
+            <div className="report-section" style={{ marginBottom: '40px' }}>
+                <ReportForm onSuccess={() => fetchIssues()} />
+            </div>
+
+            <div className="dashboard-header" style={{ borderTop: '1px solid #ddd', paddingTop: '20px' }}>
                 <h1>📋 My Reports</h1>
                 <p>Track all the civic issues you've reported.</p>
             </div>
@@ -44,9 +56,6 @@ export default function Dashboard() {
                 <div className="empty-state">
                     <span>🗺️</span>
                     <p>You haven't reported any issues yet.</p>
-                    <button className="btn-primary" onClick={() => navigate("/report")}>
-                        Report an Issue
-                    </button>
                 </div>
             ) : (
                 <div className="issues-grid">
