@@ -121,6 +121,31 @@ a:hover {
   padding: 0 32px;
   gap: 32px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  justify-content: space-between;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-collapse {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
 }
 
 .nav-brand {
@@ -579,7 +604,7 @@ a:hover {
 
 .issues-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
 }
 
@@ -1084,6 +1109,62 @@ a:hover {
     gap: 16px;
   }
 
+  .mobile-menu-toggle {
+    display: block;
+  }
+
+  .nav-collapse {
+    position: absolute;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    background: rgba(9, 11, 16, 0.98);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    flex-direction: column;
+    padding: 24px;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+    display: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .nav-collapse.open {
+    display: flex;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nav-actions {
+    flex-direction: column;
+    width: 100%;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .auth-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .nav-link {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .btn-outline,
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+
   .stats-bar,
   .filter-bar {
     padding: 12px 20px;
@@ -1094,7 +1175,8 @@ a:hover {
   }
 
   .auth-card,
-  .report-form-card {
+  .report-form-card,
+  .modal-content {
     padding: 32px 24px;
   }
 }
