@@ -21,7 +21,9 @@ export default function IssueMarker({ issue, onShare, onClick }: IssueMarkerProp
                 </span>
                 <span className={`status-badge status-${issue.status}`}>{issue.status}</span>
             </div>
-            <p className="issue-address">📍 {issue.address || "Unknown location"}</p>
+            <p className="issue-address">
+                📍 {issue.address || (issue.latitude ? `${issue.latitude.toFixed(5)}, ${issue.longitude.toFixed(5)}` : "Unknown location")}
+            </p>
             <div className="issue-meta">
                 <span>📊 {issue.report_count} report{issue.report_count !== 1 ? "s" : ""}</span>
                 <span>🕐 {formatDate(issue.created_at)}</span>
