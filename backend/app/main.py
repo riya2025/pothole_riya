@@ -44,4 +44,5 @@ app.include_router(social.router)
 
 @app.get("/", tags=["health"])
 def health_check():
-    return {"status": "ok", "message": "Civic Issue Reporting API is running (SQLite mode)"}
+    mode = "Postgres mode" if settings.POSTGRES_URL else "SQLite mode"
+    return {"status": "ok", "message": f"Civic Issue Reporting API is running ({mode})"}

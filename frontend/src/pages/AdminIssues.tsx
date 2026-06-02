@@ -30,8 +30,8 @@ export default function AdminIssues() {
     const filtered = filter === "all" ? issues : issues.filter((i) => i.type === filter);
 
     return (
-        <div className="home-page">
-            <div className="dashboard-header" style={{ borderTop: '1px solid #ddd', padding: '40px 32px 20px', marginTop: '20px' }}>
+        <div className="dashboard-page">
+            <div className="dashboard-header" style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: '20px' }}>
                 <h1>📋 All Reported Issues (Admin)</h1>
                 <p>Browse through all the civic issues reported across the city.</p>
             </div>
@@ -44,7 +44,7 @@ export default function AdminIssues() {
                     <p>No issues found matching the criteria.</p>
                 </div>
             ) : (
-                <div className="issues-grid" style={{ padding: '0 32px', paddingBottom: '40px' }}>
+                <div className="issues-grid">
                     {filtered.map((r: any) => (
                         <IssueMarker
                             key={r.report_id || r.issue_id || r.id}

@@ -5,18 +5,39 @@ import os
 from app.config import settings
 
 # Database configuration
+raw_postgres_url = settings.POSTGRES_URL
+
+if raw_postgres_url:
+    # Fix postgres:// to postgresql:// for SQLAlchemy 2.0+
+    if raw_postgres_url.startswith("postgres://"):
+        raw_postgres_url = raw_postgres_url.replace("postgres://", "postgresql://", 1)
+    
+    # Ensure sslmode=require is present
+    if "sslmode=" not in raw_postgres_url:
+        separator = "&" if "?" in raw_postgres_url else "?"
+        raw_postgres_url = f"{raw_postgres_url}{separator}sslmode=require"
+
 DATABASE_URLS = {
-    "users": settings.POSTGRES_URL or "sqlite:///./users.db",
-    "hyderabad": settings.POSTGRES_URL or "sqlite:///./hyderabad.db",
-    "bangalore": settings.POSTGRES_URL or "sqlite:///./bangalore.db",
+    "users": raw_postgres_url or "sqlite:///./users.db",
+    "hyderabad": raw_postgres_url or "sqlite:///./hyderabad.db",
+    "bangalore": raw_postgres_url or "sqlite:///./bangalore.db",
 }
 
-# SQLite specific check_same_thread
+# Connection arguments
 CONNECT_ARGS = {}
-if not settings.POSTGRES_URL:
+if raw_postgres_url:
+    CONNECT_ARGS = {"sslmode": "require"}
+else:
+    # SQLite specific check_same_thread
     CONNECT_ARGS = {"check_same_thread": False}
 
-engines = {k: create_engine(v, connect_args=CONNECT_ARGS) for k, v in DATABASE_URLS.items()}
+engines = {
+    k: create_engine(
+        v, 
+        connect_args=CONNECT_ARGS,
+        pool_pre_ping=True
+    ) for k, v in DATABASE_URLS.items()
+}
 sessions = {k: sessionmaker(autocommit=False, autoflush=False, bind=v) for k, v in engines.items()}
 
 Base = declarative_base()
