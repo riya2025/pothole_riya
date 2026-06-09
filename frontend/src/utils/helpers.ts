@@ -66,6 +66,17 @@ export const filterWithinRadius = <T extends { lat: number | null; lng: number |
             haversineM(centerLat, centerLng, item.lat, item.lng) <= radiusM
     );
 
+export const normalizeIssueType = (type: string | null | undefined): string =>
+    (type || "other").trim().toLowerCase();
+
+export const resolveMediaUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    const fallback = typeof window !== "undefined" ? window.location.origin : "";
+    const base = (process.env.REACT_APP_API_URL || fallback).replace(/\/$/, "");
+    return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+};
+
 export const getCurrentUser = (): any => {
     const token = localStorage.getItem("token");
     if (!token) return null;

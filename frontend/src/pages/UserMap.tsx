@@ -6,21 +6,12 @@ import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
 import FilterSelect from "../components/FilterSelect";
 import MapLegend from "../components/MapLegend";
-import { issueIcon, issueColor, filterWithinRadius, haversineM } from "../utils/helpers";
+import { issueIcon, issueColor, filterWithinRadius, haversineM, normalizeIssueType } from "../utils/helpers";
 import { CITIES, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
 
-const cityOptions = CITIES.map((c) => ({
-    value: c.value,
-    label: c.label,
-    icon: c.value === "all" ? "🌐" : "📍",
-}));
-
-const typeOptions = ISSUE_TYPES.map((t) => ({
-    value: t.value,
-    label: t.label,
-    icon: t.value === "all" ? "🗺️" : issueIcon(t.value),
-}));
+const cityOptions = CITIES.map((c) => ({ value: c.value, label: c.label }));
+const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
 const RADIUS_M = 20;
 const MAP_ZOOM = 18;
@@ -77,10 +68,10 @@ export default function UserMap() {
         if (!userPos) return [];
         let result = filterWithinRadius(issues, userPos[0], userPos[1], RADIUS_M);
         if (cityFilter !== "all") {
-            result = result.filter((i) => i.city === cityFilter);
+            result = result.filter((i) => (i.city || "").toLowerCase() === cityFilter);
         }
         if (typeFilter !== "all") {
-            result = result.filter((i) => i.type === typeFilter);
+            result = result.filter((i) => normalizeIssueType(i.type) === typeFilter);
         }
         return result;
     }, [issues, userPos, cityFilter, typeFilter]);
@@ -140,7 +131,7 @@ export default function UserMap() {
                                 onMarkerClick={(issue) => setSelectedId(issue.id)}
                                 onViewDetails={(issue) => setDetailId(issue.id)}
                             />
-                            <MapLegend />
+                            <MapLegend activeType={typeFilter} onTypeSelect={(t) => setTypeFilter((p) => (p === t ? "all" : t))} />
                         </>
                     ) : null}
                 </div>

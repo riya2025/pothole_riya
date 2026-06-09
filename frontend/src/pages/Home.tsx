@@ -1,26 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import MapView from "../components/MapView";
-import HeroStatsPanel from "../components/HeroStatsPanel";
+import HeroVisualGallery from "../components/HeroVisualGallery";
+import PlatformStatsBar from "../components/PlatformStatsBar";
 import MapLegend from "../components/MapLegend";
 import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
-import { issueIcon, issueColor } from "../utils/helpers";
+import { issueIcon, issueColor, normalizeIssueType } from "../utils/helpers";
 import { CITIES, CITY_CENTERS, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
 
-const cityOptions = CITIES.map((c) => ({
-    value: c.value,
-    label: c.label,
-    icon: c.value === "hyderabad" ? "📍" : c.value === "bangalore" ? "📍" : "🌐",
-}));
-
-const typeOptions = ISSUE_TYPES.map((t) => ({
-    value: t.value,
-    label: t.label,
-    icon: t.value === "all" ? "🗺️" : issueIcon(t.value),
-}));
+const cityOptions = CITIES.map((c) => ({ value: c.value, label: c.label }));
+const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
 export default function Home() {
     const [issues, setIssues] = useState<Issue[]>([]);
@@ -46,22 +38,38 @@ export default function Home() {
     const filtered = useMemo(() => {
         let result = issues;
         if (cityFilter !== "all") {
-            result = result.filter((i) => i.city === cityFilter);
+            result = result.filter((i) => (i.city || "").toLowerCase() === cityFilter);
         }
         if (typeFilter !== "all") {
-            result = result.filter((i) => i.type === typeFilter);
+            result = result.filter((i) => normalizeIssueType(i.type) === typeFilter);
         }
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(
                 (i) =>
                     i.address?.toLowerCase().includes(q) ||
-                    i.type?.toLowerCase().includes(q) ||
+                    normalizeIssueType(i.type).includes(q) ||
                     i.city?.toLowerCase().includes(q)
             );
         }
         return result;
     }, [issues, cityFilter, typeFilter, search]);
+
+    useEffect(() => {
+        if (selectedId && !filtered.some((i) => i.id === selectedId)) {
+            setSelectedId(null);
+        }
+    }, [filtered, selectedId]);
+
+    const handleTypeSelect = (type: string) => {
+        setTypeFilter((prev) => (prev === type ? "all" : type));
+        setSelectedId(null);
+    };
+
+    const handleViewDetails = (issue: Issue) => {
+        setSelectedId(issue.id);
+        setDetailId(issue.id);
+    };
 
     return (
         <div className="home-page">
@@ -81,22 +89,34 @@ export default function Home() {
                             <Link to="/login" className="btn-outline">Sign In</Link>
                         </div>
                     </div>
-                    <HeroStatsPanel issues={issues} />
+                    <HeroVisualGallery activeType={typeFilter} onTypeSelect={handleTypeSelect} />
                 </div>
             </section>
+
+            <PlatformStatsBar
+                totalReports={issues.length}
+                filteredCount={filtered.length}
+                cityFilter={cityFilter}
+            />
 
             <div className="filter-toolbar">
                 <FilterSelect
                     label="City"
                     value={cityFilter}
-                    onChange={(v) => setCityFilter(v as CityValue)}
+                    onChange={(v) => {
+                        setCityFilter(v as CityValue);
+                        setSelectedId(null);
+                    }}
                     options={cityOptions}
                     id="home-city-filter"
                 />
                 <FilterSelect
                     label="Issue Type"
                     value={typeFilter}
-                    onChange={setTypeFilter}
+                    onChange={(v) => {
+                        setTypeFilter(v);
+                        setSelectedId(null);
+                    }}
                     options={typeOptions}
                     id="home-type-filter"
                 />
@@ -111,9 +131,20 @@ export default function Home() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <div className="filter-result-badge">
-                    {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-                </div>
+                {(typeFilter !== "all" || cityFilter !== "all") && (
+                    <button
+                        type="button"
+                        className="btn-outline filter-clear-btn"
+                        onClick={() => {
+                            setTypeFilter("all");
+                            setCityFilter("all");
+                            setSearch("");
+                            setSelectedId(null);
+                        }}
+                    >
+                        Clear filters
+                    </button>
+                )}
             </div>
 
             <div className="map-layout">
@@ -126,29 +157,45 @@ export default function Home() {
                     ) : (
                         <>
                             <MapView
+                                key={`map-${typeFilter}-${cityFilter}-${filtered.length}`}
                                 issues={filtered}
                                 mapCenter={mapCenter}
                                 selectedId={selectedId}
                                 onMarkerClick={(issue) => setSelectedId(issue.id)}
-                                onViewDetails={(issue) => setDetailId(issue.id)}
+                                onViewDetails={handleViewDetails}
                             />
-                            <MapLegend />
+                            <MapLegend activeType={typeFilter} onTypeSelect={handleTypeSelect} />
                         </>
                     )}
                 </div>
 
                 <aside className="issue-sidebar">
                     <div className="sidebar-header">
-                        <h3>Issues{cityFilter !== "all" ? ` in ${cityFilter}` : ""}</h3>
-                        <span className="sidebar-count">{filtered.length} issue{filtered.length !== 1 ? "s" : ""}</span>
+                        <h3>
+                            {typeFilter !== "all"
+                                ? `${typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1)} issues`
+                                : `Issues${cityFilter !== "all" ? ` in ${cityFilter}` : ""}`}
+                        </h3>
+                        <span className="sidebar-count">{filtered.length} shown</span>
                     </div>
                     <div className="issue-sidebar-list">
                         {loading ? (
                             <div className="loading-center"><div className="spinner" /></div>
                         ) : filtered.length === 0 ? (
-                            <div className="empty-state" style={{ padding: "40px 20px", fontSize: "14px" }}>
+                            <div className="empty-state sidebar-empty">
                                 <span>🔍</span>
                                 <p>No issues match your filters.</p>
+                                <button
+                                    type="button"
+                                    className="btn-outline"
+                                    onClick={() => {
+                                        setTypeFilter("all");
+                                        setCityFilter("all");
+                                        setSearch("");
+                                    }}
+                                >
+                                    Reset filters
+                                </button>
                             </div>
                         ) : (
                             filtered.map((issue) => {
@@ -161,7 +208,6 @@ export default function Home() {
                                         style={{ borderLeftColor: isActive ? color : "transparent" }}
                                         onClick={() => {
                                             setSelectedId(issue.id);
-                                            setDetailId(issue.id);
                                             if (issue.lat && issue.lng) {
                                                 setMapCenter([issue.lat, issue.lng]);
                                             }
@@ -175,7 +221,16 @@ export default function Home() {
                                         </div>
                                         <div className="sidebar-issue-meta">
                                             <span>{issue.city}</span>
-                                            <span>{issue.report_count} report{issue.report_count !== 1 ? "s" : ""}</span>
+                                            <button
+                                                type="button"
+                                                className="sidebar-detail-link"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewDetails(issue);
+                                                }}
+                                            >
+                                                View details
+                                            </button>
                                         </div>
                                     </div>
                                 );

@@ -2,34 +2,24 @@ import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../App";
 import IssueMarker from "../components/IssueMarker";
-import HeroStatsPanel from "../components/HeroStatsPanel";
+import HeroVisualGallery from "../components/HeroVisualGallery";
+import PlatformStatsBar from "../components/PlatformStatsBar";
 import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
-import { issueIcon } from "../utils/helpers";
+import { normalizeIssueType } from "../utils/helpers";
 import { CITIES, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
 
-const cityOptions = CITIES.map((c) => ({
-    value: c.value,
-    label: c.label,
-    icon: c.value === "all" ? "🌐" : "📍",
-}));
-
-const typeOptions = ISSUE_TYPES.map((t) => ({
-    value: t.value,
-    label: t.label,
-    icon: t.value === "all" ? "🗺️" : issueIcon(t.value),
-}));
+const cityOptions = CITIES.map((c) => ({ value: c.value, label: c.label }));
+const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
 export default function AdminIssues() {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user) {
-            navigate("/map");
-        }
+        if (user) navigate("/map");
     }, [user, navigate]);
 
     const [issues, setIssues] = useState<Issue[]>([]);
@@ -49,17 +39,17 @@ export default function AdminIssues() {
     const filtered = useMemo(() => {
         let result = issues;
         if (cityFilter !== "all") {
-            result = result.filter((i) => i.city === cityFilter);
+            result = result.filter((i) => (i.city || "").toLowerCase() === cityFilter);
         }
         if (typeFilter !== "all") {
-            result = result.filter((i) => i.type === typeFilter);
+            result = result.filter((i) => normalizeIssueType(i.type) === typeFilter);
         }
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(
                 (i) =>
                     i.address?.toLowerCase().includes(q) ||
-                    i.type?.toLowerCase().includes(q) ||
+                    normalizeIssueType(i.type).includes(q) ||
                     i.status?.toLowerCase().includes(q)
             );
         }
@@ -73,22 +63,22 @@ export default function AdminIssues() {
                     <h1>All Reported Issues</h1>
                     <p>Browse civic issues reported across Hyderabad and Bangalore.</p>
                 </div>
-                <HeroStatsPanel issues={issues} compact />
+                <HeroVisualGallery
+                    compact
+                    activeType={typeFilter}
+                    onTypeSelect={(t) => setTypeFilter((prev) => (prev === t ? "all" : t))}
+                />
             </section>
 
-            <div className="filter-toolbar" style={{ borderRadius: "var(--radius-lg)", marginBottom: "24px", border: "1px solid var(--border)" }}>
-                <FilterSelect
-                    label="City"
-                    value={cityFilter}
-                    onChange={(v) => setCityFilter(v as CityValue)}
-                    options={cityOptions}
-                />
-                <FilterSelect
-                    label="Issue Type"
-                    value={typeFilter}
-                    onChange={setTypeFilter}
-                    options={typeOptions}
-                />
+            <PlatformStatsBar
+                totalReports={issues.length}
+                filteredCount={filtered.length}
+                cityFilter={cityFilter}
+            />
+
+            <div className="filter-toolbar admin-filter-toolbar">
+                <FilterSelect label="City" value={cityFilter} onChange={(v) => setCityFilter(v as CityValue)} options={cityOptions} />
+                <FilterSelect label="Issue Type" value={typeFilter} onChange={setTypeFilter} options={typeOptions} />
                 <div className="filter-search-group">
                     <label className="filter-select-label" htmlFor="admin-search">Search</label>
                     <input
@@ -99,9 +89,6 @@ export default function AdminIssues() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
-                </div>
-                <div className="filter-result-badge">
-                    {filtered.length} result{filtered.length !== 1 ? "s" : ""}
                 </div>
             </div>
 
@@ -115,11 +102,7 @@ export default function AdminIssues() {
             ) : (
                 <div className="issues-grid">
                     {filtered.map((r: any) => (
-                        <IssueMarker
-                            key={r.report_id || r.issue_id || r.id}
-                            issue={r}
-                            onClick={(issue) => setDetailId(issue.id)}
-                        />
+                        <IssueMarker key={r.report_id || r.issue_id || r.id} issue={r} onClick={(issue) => setDetailId(issue.id)} />
                     ))}
                 </div>
             )}
