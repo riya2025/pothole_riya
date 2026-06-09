@@ -109,7 +109,9 @@ export default function MapView({
         const issue = issuesRef.current.find((i) => i.id === issueId);
         if (!issue) return;
         mapInstanceRef.current?.closePopup();
-        onViewDetailsRef.current?.(issue);
+        requestAnimationFrame(() => {
+            onViewDetailsRef.current?.(issue);
+        });
     }, []);
 
     useEffect(() => {

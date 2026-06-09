@@ -1033,15 +1033,142 @@ a:hover {
   min-height: calc(100vh - var(--nav-height) - 180px);
 }
 
-/* ── Issue Detail Modal ────────────────────────────────────────────── */
+/* ── Issue Detail Modal (portal, viewport-centered) ───────────────── */
+.issue-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(9, 11, 16, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.issue-detail-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: min(90vh, 820px);
+  margin: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  animation: slideUp 0.28s ease-out forwards;
+}
+
+.issue-detail-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15, 18, 26, 0.95);
+  flex-shrink: 0;
+}
+
+.issue-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.issue-detail-back:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.issue-detail-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-primary);
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.issue-detail-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.issue-detail-close:hover {
+  color: var(--error);
+}
+
+.issue-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  overscroll-behavior: contain;
+}
+
+.issue-detail-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+
+.issue-detail-footer {
+  flex-shrink: 0;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(15, 18, 26, 0.95);
+}
+
+.issue-detail-footer-back {
+  width: 100%;
+  justify-content: center;
+}
+
+.detail-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .modal-content-wide {
   max-width: 640px;
   max-height: 85vh;
   overflow-y: auto;
-}
-
-.issue-detail-modal {
-  padding: 32px;
 }
 
 .issue-detail-error {
@@ -2005,10 +2132,6 @@ a:hover {
 }
 
 /* ── Modal Popup ─────────────────────────────────────────────────────── */
-.issue-detail-overlay {
-  z-index: 10000;
-}
-
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -2419,6 +2542,25 @@ a:hover {
 
   .detail-summary-cards {
     grid-template-columns: 1fr;
+  }
+
+  .issue-detail-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .issue-detail-panel {
+    max-height: 94vh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .issue-detail-back span,
+  .issue-detail-title {
+    font-size: 14px;
+  }
+
+  .issue-detail-toolbar {
+    padding: 12px 14px;
   }
 
   .map-legend-items {
