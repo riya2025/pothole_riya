@@ -2,6 +2,8 @@ import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../App";
 import IssueMarker from "../components/IssueMarker";
+import IssueVisualCards from "../components/IssueVisualCards";
+import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor } from "../utils/helpers";
 import { Issue } from "../types";
@@ -12,15 +14,16 @@ export default function AdminIssues() {
 
     useEffect(() => {
         if (user) {
-            navigate("/dashboard");
+            navigate("/map");
         }
     }, [user, navigate]);
 
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all");
+    const [typeFilter, setTypeFilter] = useState("all");
+    const [cityFilter, setCityFilter] = useState<"all" | "hyderabad" | "bangalore">("all");
     const [search, setSearch] = useState("");
-    const [selectedIssue, setSelectedIssue] = useState<any>(null);
+    const [detailId, setDetailId] = useState<number | null>(null);
 
     useEffect(() => {
         getAllIssues()
@@ -30,7 +33,13 @@ export default function AdminIssues() {
     }, []);
 
     const filtered = useMemo(() => {
-        let result = filter === "all" ? issues : issues.filter((i) => i.type === filter);
+        let result = issues;
+        if (cityFilter !== "all") {
+            result = result.filter((i) => i.city === cityFilter);
+        }
+        if (typeFilter !== "all") {
+            result = result.filter((i) => i.type === typeFilter);
+        }
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(
@@ -41,49 +50,37 @@ export default function AdminIssues() {
             );
         }
         return result;
-    }, [issues, filter, search]);
-
-    const statusCounts = {
-        active: issues.filter((i) => i.status === "active").length,
-        resolved: issues.filter((i) => i.status === "resolved").length,
-    };
+    }, [issues, cityFilter, typeFilter, search]);
 
     return (
         <div className="dashboard-page">
-            <div className="dashboard-header">
-                <h1>All Reported Issues</h1>
-                <p>Browse civic issues reported across Hyderabad and Bangalore.</p>
-            </div>
-
-            <div className="stats-bar" style={{ position: "static", marginBottom: "24px", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}>
-                <div className="stat-item total">
-                    <span className="stat-number">{issues.length}</span>
-                    <span className="stat-label">Total</span>
+            <section className="admin-hero">
+                <div className="admin-hero-text">
+                    <h1>All Reported Issues</h1>
+                    <p>Browse civic issues reported across Hyderabad and Bangalore.</p>
                 </div>
-                <div className="stat-item mini" style={{ borderColor: issueColor("pothole") }}>
-                    <span className="stat-number" style={{ color: issueColor("pothole") }}>
-                        {issues.filter((i) => i.type === "pothole").length}
-                    </span>
-                    <span className="stat-label">{issueIcon("pothole")} Potholes</span>
-                </div>
-                <div className="stat-item mini" style={{ borderColor: "var(--success)" }}>
-                    <span className="stat-number" style={{ color: "var(--success)" }}>{statusCounts.active}</span>
-                    <span className="stat-label">Active</span>
-                </div>
-                <div className="stat-item mini" style={{ borderColor: "var(--accent)" }}>
-                    <span className="stat-number" style={{ color: "var(--accent)" }}>{statusCounts.resolved}</span>
-                    <span className="stat-label">Resolved</span>
-                </div>
-            </div>
+                <IssueVisualCards compact />
+            </section>
 
             <div className="toolbar-row" style={{ borderRadius: "var(--radius-lg)", marginBottom: "24px", border: "1px solid var(--border)" }}>
-                <span className="toolbar-label">Filter</span>
+                <span className="toolbar-label">City</span>
+                {(["all", "hyderabad", "bangalore"] as const).map((c) => (
+                    <button
+                        key={c}
+                        className={`filter-chip ${cityFilter === c ? "active" : ""}`}
+                        onClick={() => setCityFilter(c)}
+                    >
+                        {c === "all" ? "All Cities" : c.charAt(0).toUpperCase() + c.slice(1)}
+                    </button>
+                ))}
+                <div className="toolbar-divider" />
+                <span className="toolbar-label">Type</span>
                 {["all", "pothole", "garbage", "streetlight", "other"].map((t) => (
                     <button
                         key={t}
-                        className={`filter-chip ${filter === t ? "active" : ""}`}
-                        onClick={() => setFilter(t)}
-                        style={filter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
+                        className={`filter-chip ${typeFilter === t ? "active" : ""}`}
+                        onClick={() => setTypeFilter(t)}
+                        style={typeFilter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
                     >
                         {t === "all" ? "All" : `${issueIcon(t)} ${t}`}
                     </button>
@@ -112,59 +109,13 @@ export default function AdminIssues() {
                         <IssueMarker
                             key={r.report_id || r.issue_id || r.id}
                             issue={r}
-                            onClick={(issue) => setSelectedIssue(issue)}
+                            onClick={(issue) => setDetailId(issue.id)}
                         />
                     ))}
                 </div>
             )}
 
-            {selectedIssue && (
-                <div className="modal-overlay" onClick={() => setSelectedIssue(null)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close" onClick={() => setSelectedIssue(null)}>×</button>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                            <span
-                                className="issue-type-badge"
-                                style={{
-                                    background: `${issueColor(selectedIssue.type)}22`,
-                                    color: issueColor(selectedIssue.type),
-                                }}
-                            >
-                                {issueIcon(selectedIssue.type)} {selectedIssue.type}
-                            </span>
-                            <span className={`status-badge status-${selectedIssue.status}`}>
-                                {selectedIssue.status}
-                            </span>
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            <div>
-                                <strong style={{ color: "var(--text-muted)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>Location</strong>
-                                <p style={{ marginTop: "6px" }}>{selectedIssue.address || "Unknown"}</p>
-                            </div>
-                            {selectedIssue.description && (
-                                <div>
-                                    <strong style={{ color: "var(--text-muted)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>Description</strong>
-                                    <p style={{ marginTop: "6px", color: "var(--text-secondary)" }}>{selectedIssue.description}</p>
-                                </div>
-                            )}
-                            <div style={{ display: "flex", gap: "24px" }}>
-                                <div>
-                                    <strong style={{ color: "var(--text-muted)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>Reports</strong>
-                                    <p style={{ marginTop: "6px", fontSize: "20px", fontWeight: 800 }}>{selectedIssue.report_count}</p>
-                                </div>
-                                {selectedIssue.lat && selectedIssue.lng && (
-                                    <div>
-                                        <strong style={{ color: "var(--text-muted)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>Coordinates</strong>
-                                        <p style={{ marginTop: "6px", fontFamily: "monospace", fontSize: "13px" }}>
-                                            {selectedIssue.lat.toFixed(5)}, {selectedIssue.lng.toFixed(5)}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <IssueDetailModal issueId={detailId} onClose={() => setDetailId(null)} />
         </div>
     );
 }

@@ -29,3 +29,16 @@ export interface Report {
     description: string | null;
     created_at: string;
 }
+
+export interface IssueReport {
+    id: number;
+    description: string | null;
+    image_url: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    created_at: string;
+}
+
+export interface IssueDetail extends Issue {
+    reports: IssueReport[];
+}

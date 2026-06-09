@@ -1,27 +1,27 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../App";
+import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import MapView from "../components/MapView";
+import IssueVisualCards from "../components/IssueVisualCards";
+import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor } from "../utils/helpers";
 import { Issue } from "../types";
 
+const CITY_CENTERS: Record<string, [number, number]> = {
+    all: [17.385, 78.4867],
+    hyderabad: [17.385, 78.4867],
+    bangalore: [12.9716, 77.5946],
+};
+
 export default function Home() {
-    const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (user) {
-            navigate("/dashboard");
-        }
-    }, [user, navigate]);
-
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all");
+    const [typeFilter, setTypeFilter] = useState("all");
+    const [cityFilter, setCityFilter] = useState<"all" | "hyderabad" | "bangalore">("all");
     const [search, setSearch] = useState("");
-    const [mapCenter, setMapCenter] = useState<[number, number]>([17.385, 78.4867]);
+    const [mapCenter, setMapCenter] = useState<[number, number]>(CITY_CENTERS.all);
     const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [detailId, setDetailId] = useState<number | null>(null);
 
     useEffect(() => {
         getAllIssues()
@@ -30,8 +30,18 @@ export default function Home() {
             .finally(() => setLoading(false));
     }, []);
 
+    useEffect(() => {
+        setMapCenter(CITY_CENTERS[cityFilter]);
+    }, [cityFilter]);
+
     const filtered = useMemo(() => {
-        let result = filter === "all" ? issues : issues.filter((i) => i.type === filter);
+        let result = issues;
+        if (cityFilter !== "all") {
+            result = result.filter((i) => i.city === cityFilter);
+        }
+        if (typeFilter !== "all") {
+            result = result.filter((i) => i.type === typeFilter);
+        }
         if (search.trim()) {
             const q = search.toLowerCase();
             result = result.filter(
@@ -42,27 +52,12 @@ export default function Home() {
             );
         }
         return result;
-    }, [issues, filter, search]);
-
-    const cityStats = ["hyderabad", "bangalore"].map((city) => ({
-        city,
-        total: issues.filter((i) => i.city === city).length,
-        pothole: issues.filter((i) => i.city === city && i.type === "pothole").length,
-        streetlight: issues.filter((i) => i.city === city && i.type === "streetlight").length,
-        garbage: issues.filter((i) => i.city === city && i.type === "garbage").length,
-    }));
-
-    const typeCounts = {
-        pothole: issues.filter((i) => i.type === "pothole").length,
-        garbage: issues.filter((i) => i.type === "garbage").length,
-        streetlight: issues.filter((i) => i.type === "streetlight").length,
-        other: issues.filter((i) => i.type === "other").length,
-    };
+    }, [issues, cityFilter, typeFilter, search]);
 
     return (
         <div className="home-page">
-            <section className="hero-section">
-                <div className="hero-content">
+            <section className="hero-section hero-with-visuals">
+                <div className="hero-content hero-content-split">
                     <div className="hero-text">
                         <h1>
                             Spot it. <span>Report it.</span><br />
@@ -77,83 +72,33 @@ export default function Home() {
                             <Link to="/login" className="btn-outline">Sign In</Link>
                         </div>
                     </div>
-                    <div className="hero-stats-preview">
-                        <div className="hero-stat-pill">
-                            <span className="stat-number">{issues.length}</span>
-                            <span className="stat-label">Reports</span>
-                        </div>
-                        <div className="hero-stat-pill">
-                            <span className="stat-number" style={{ color: issueColor("pothole") }}>
-                                {typeCounts.pothole}
-                            </span>
-                            <span className="stat-label">{issueIcon("pothole")} Potholes</span>
-                        </div>
-                        <div className="hero-stat-pill">
-                            <span className="stat-number" style={{ color: issueColor("streetlight") }}>
-                                {typeCounts.streetlight}
-                            </span>
-                            <span className="stat-label">{issueIcon("streetlight")} Lights</span>
-                        </div>
-                    </div>
+                    <IssueVisualCards />
                 </div>
             </section>
 
-            <div className="stats-bar">
-                <div className="stat-item total">
-                    <span className="stat-number">{issues.length}</span>
-                    <span className="stat-label">Total Reports</span>
-                </div>
-                {cityStats.map((cs) => (
-                    <div key={cs.city} className="city-stats-group">
-                        <div className="city-label">{cs.city === "hyderabad" ? "HYD" : "BLR"}</div>
-                        <div className="city-counts">
-                            <div className="stat-item mini" style={{ borderColor: "#a78bfa" }}>
-                                <span className="stat-number" style={{ color: "#a78bfa" }}>{cs.total}</span>
-                                <span className="stat-label">Total</span>
-                            </div>
-                            <div className="stat-item mini" style={{ borderColor: issueColor("pothole") }}>
-                                <span className="stat-number" style={{ color: issueColor("pothole") }}>{cs.pothole}</span>
-                                <span className="stat-label">{issueIcon("pothole")}</span>
-                            </div>
-                            <div className="stat-item mini" style={{ borderColor: issueColor("streetlight") }}>
-                                <span className="stat-number" style={{ color: issueColor("streetlight") }}>{cs.streetlight}</span>
-                                <span className="stat-label">{issueIcon("streetlight")}</span>
-                            </div>
-                            <div className="stat-item mini" style={{ borderColor: issueColor("garbage") }}>
-                                <span className="stat-number" style={{ color: issueColor("garbage") }}>{cs.garbage}</span>
-                                <span className="stat-label">{issueIcon("garbage")}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
             <div className="toolbar-row">
-                <span className="toolbar-label">Filter</span>
+                <span className="toolbar-label">City</span>
+                {(["all", "hyderabad", "bangalore"] as const).map((c) => (
+                    <button
+                        key={c}
+                        className={`filter-chip ${cityFilter === c ? "active" : ""}`}
+                        onClick={() => setCityFilter(c)}
+                    >
+                        {c === "all" ? "All Cities" : c.charAt(0).toUpperCase() + c.slice(1)}
+                    </button>
+                ))}
+                <div className="toolbar-divider" />
+                <span className="toolbar-label">Type</span>
                 {["all", "pothole", "garbage", "streetlight", "other"].map((t) => (
                     <button
                         key={t}
-                        className={`filter-chip ${filter === t ? "active" : ""}`}
-                        onClick={() => setFilter(t)}
-                        style={filter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
+                        className={`filter-chip ${typeFilter === t ? "active" : ""}`}
+                        onClick={() => setTypeFilter(t)}
+                        style={typeFilter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
                     >
                         {t === "all" ? "All" : `${issueIcon(t)} ${t}`}
                     </button>
                 ))}
-                <div className="toolbar-divider" />
-                <span className="toolbar-label">City</span>
-                <button
-                    className={`filter-chip ${mapCenter[0] === 17.385 ? "active" : ""}`}
-                    onClick={() => setMapCenter([17.385, 78.4867])}
-                >
-                    Hyderabad
-                </button>
-                <button
-                    className={`filter-chip ${mapCenter[0] === 12.9716 ? "active" : ""}`}
-                    onClick={() => setMapCenter([12.9716, 77.5946])}
-                >
-                    Bangalore
-                </button>
             </div>
 
             <div className="map-layout">
@@ -170,6 +115,7 @@ export default function Home() {
                                 mapCenter={mapCenter}
                                 selectedId={selectedId}
                                 onMarkerClick={(issue) => setSelectedId(issue.id)}
+                                onViewDetails={(issue) => setDetailId(issue.id)}
                             />
                             <div className="map-legend">
                                 <div className="map-legend-title">Issue Types</div>
@@ -186,8 +132,8 @@ export default function Home() {
 
                 <aside className="issue-sidebar">
                     <div className="sidebar-header">
-                        <h3>Nearby Issues</h3>
-                        <span className="sidebar-count">{filtered.length} issue{filtered.length !== 1 ? "s" : ""} found</span>
+                        <h3>Issues{cityFilter !== "all" ? ` in ${cityFilter}` : ""}</h3>
+                        <span className="sidebar-count">{filtered.length} issue{filtered.length !== 1 ? "s" : ""}</span>
                         <input
                             type="text"
                             className="search-input"
@@ -202,7 +148,7 @@ export default function Home() {
                         ) : filtered.length === 0 ? (
                             <div className="empty-state" style={{ padding: "40px 20px", fontSize: "14px" }}>
                                 <span>🔍</span>
-                                <p>No issues match your search.</p>
+                                <p>No issues match your filters.</p>
                             </div>
                         ) : (
                             filtered.map((issue) => {
@@ -215,6 +161,7 @@ export default function Home() {
                                         style={{ borderLeftColor: isActive ? color : "transparent" }}
                                         onClick={() => {
                                             setSelectedId(issue.id);
+                                            setDetailId(issue.id);
                                             if (issue.lat && issue.lng) {
                                                 setMapCenter([issue.lat, issue.lng]);
                                             }
@@ -227,7 +174,7 @@ export default function Home() {
                                             {issue.address || "Unknown location"}
                                         </div>
                                         <div className="sidebar-issue-meta">
-                                            <span>{issue.status}</span>
+                                            <span>{issue.city}</span>
                                             <span>{issue.report_count} report{issue.report_count !== 1 ? "s" : ""}</span>
                                         </div>
                                     </div>
@@ -237,6 +184,8 @@ export default function Home() {
                     </div>
                 </aside>
             </div>
+
+            <IssueDetailModal issueId={detailId} onClose={() => setDetailId(null)} />
         </div>
     );
 }

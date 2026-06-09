@@ -26,3 +26,9 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[int] = None
+
+
+class ClerkSyncRequest(BaseModel):
+    name: str
+    email: EmailStr
+    clerk_id: str

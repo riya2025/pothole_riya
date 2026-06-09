@@ -28,3 +28,7 @@ def create_report(
 
 def get_reports_by_user(db: Session, user_id: int) -> List[Report]:
     return db.query(Report).filter(Report.user_id == user_id).order_by(Report.created_at.desc()).all()
+
+
+def get_reports_by_issue(db: Session, issue_id: int) -> List[Report]:
+    return db.query(Report).filter(Report.issue_id == issue_id).order_by(Report.created_at.desc()).all()

@@ -3,8 +3,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from app.database import get_db
-from app.schemas.issue import IssueReportResponse, IssueOut
+from app.schemas.issue import IssueReportResponse, IssueOut, IssueDetailOut, ReportOut
 from app.repositories.issue_repo import get_all_issues, get_issue_lat_lng
+from app.repositories.report_repo import get_reports_by_issue
+from app.models.issue import Issue as IssueModel
 from app.services.issue_service import handle_report
 from app.auth.dependencies import get_current_user, get_optional_user
 from app.models.user import User
@@ -69,3 +71,34 @@ def get_issues():
     # Sort by created_at descending if needed
     all_issues.sort(key=lambda x: x.created_at, reverse=True)
     return all_issues
+
+
+@router.get("/{issue_id}", response_model=IssueDetailOut)
+def get_issue_detail(issue_id: int):
+    from app.database import sessions
+    from app.services.issue_service import get_city_from_coords
+
+    db = sessions["users"]()
+    try:
+        issue = db.query(IssueModel).filter(IssueModel.id == issue_id).first()
+        if not issue:
+            raise HTTPException(404, detail="Issue not found")
+
+        lat, lng = get_issue_lat_lng(issue)
+        city = get_city_from_coords(lat, lng) if lat and lng else "hyderabad"
+        reports = get_reports_by_issue(db, issue_id)
+
+        return IssueDetailOut(
+            id=issue.id,
+            type=issue.type,
+            status=issue.status,
+            address=issue.address,
+            report_count=issue.report_count,
+            lat=lat,
+            lng=lng,
+            city=city,
+            created_at=issue.created_at,
+            reports=[ReportOut.model_validate(r) for r in reports],
+        )
+    finally:
+        db.close()

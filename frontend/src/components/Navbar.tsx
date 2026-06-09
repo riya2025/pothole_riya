@@ -1,20 +1,40 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../App";
 
+function KebabIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <circle cx="10" cy="4" r="1.75" />
+            <circle cx="10" cy="10" r="1.75" />
+            <circle cx="10" cy="16" r="1.75" />
+        </svg>
+    );
+}
+
 export default function Navbar() {
-    const { user, setUser } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setIsMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        setUser(null);
-        navigate("/");
+        logout();
+        setIsMenuOpen(false);
     };
 
-    const closeMenu = () => setIsMobileMenuOpen(false);
+    const closeMenu = () => setIsMenuOpen(false);
 
     const navLink = (to: string, label: string) => (
         <Link
@@ -28,49 +48,79 @@ export default function Navbar() {
 
     return (
         <nav className="navbar">
-            <div className="nav-brand" onClick={() => { navigate("/"); closeMenu(); }}>
+            <div className="nav-brand" onClick={() => { navigate(user ? "/map" : "/"); closeMenu(); }}>
                 <span className="brand-icon">📍</span>
                 <span className="brand-name">CivicWatch</span>
             </div>
 
-            <button
-                className="mobile-menu-toggle"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle navigation"
-            >
-                {isMobileMenuOpen ? "✖" : "☰"}
-            </button>
+            <div className="nav-links nav-links-desktop">
+                {!user && (
+                    <>
+                        {navLink("/", "Map View")}
+                        {navLink("/admin-issues", "All Reports")}
+                    </>
+                )}
+                {user && (
+                    <>
+                        {navLink("/map", "Nearby Map")}
+                        {navLink("/dashboard", "Report Issue")}
+                        {navLink("/my-reports", "My Reports")}
+                    </>
+                )}
+            </div>
 
-            <div className={`nav-collapse ${isMobileMenuOpen ? "open" : ""}`}>
-                <div className="nav-links">
-                    {!user && (
-                        <>
-                            {navLink("/", "🗺️ Map View")}
-                            {navLink("/admin-issues", "📋 All Reports")}
-                        </>
-                    )}
-                    {user && (
-                        <>
-                            {navLink("/dashboard", "📋 Report Issue")}
-                            {navLink("/my-reports", "📊 My Reports")}
-                        </>
-                    )}
-                </div>
-                <div className="nav-actions">
-                    {user ? (
-                        <div className="user-menu">
-                            <span className="user-badge">👤 User #{user.id}</span>
-                            <button className="btn-outline" onClick={() => { handleLogout(); closeMenu(); }}>
+            <div className="nav-actions nav-actions-desktop">
+                {user ? (
+                    <div className="user-menu">
+                        <span className="user-badge">👤 {user.name || `User #${user.id}`}</span>
+                        <button className="btn-outline" onClick={handleLogout}>Logout</button>
+                    </div>
+                ) : (
+                    <div className="auth-buttons">
+                        <Link to="/login" className="btn-outline">Login</Link>
+                        <Link to="/register" className="btn-primary">Sign Up</Link>
+                    </div>
+                )}
+            </div>
+
+            <div className="kebab-menu-wrapper" ref={menuRef}>
+                <button
+                    className="kebab-menu-toggle"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    aria-label="Open menu"
+                    aria-expanded={isMenuOpen}
+                >
+                    <KebabIcon />
+                </button>
+
+                {isMenuOpen && (
+                    <div className="kebab-dropdown">
+                        {!user && (
+                            <>
+                                {navLink("/", "Map View")}
+                                {navLink("/admin-issues", "All Reports")}
+                            </>
+                        )}
+                        {user && (
+                            <>
+                                {navLink("/map", "Nearby Map")}
+                                {navLink("/dashboard", "Report Issue")}
+                                {navLink("/my-reports", "My Reports")}
+                            </>
+                        )}
+                        <div className="kebab-dropdown-divider" />
+                        {user ? (
+                            <button className="kebab-dropdown-item danger" onClick={handleLogout}>
                                 Logout
                             </button>
-                        </div>
-                    ) : (
-                        <div className="auth-buttons">
-                            <Link to="/login" className="btn-outline" onClick={closeMenu}>Login</Link>
-                            <Link to="/register" className="btn-primary" onClick={closeMenu}>Sign Up</Link>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <>
+                                <Link to="/login" className="kebab-dropdown-item" onClick={closeMenu}>Login</Link>
+                                <Link to="/register" className="kebab-dropdown-item primary" onClick={closeMenu}>Sign Up</Link>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </nav>
     );
