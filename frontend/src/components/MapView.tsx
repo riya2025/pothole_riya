@@ -1,8 +1,22 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { issueColor, issueIcon } from "../utils/helpers";
 import { Issue } from "../types";
+
+function createMarkerGroup(): L.MarkerClusterGroup | L.LayerGroup {
+    if (typeof (L as typeof L & { markerClusterGroup?: typeof L.markerClusterGroup }).markerClusterGroup === "function") {
+        return L.markerClusterGroup({
+            maxClusterRadius: 50,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+        });
+    }
+    return L.layerGroup();
+}
 
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl;
@@ -115,12 +129,7 @@ export default function MapView({
 
         mapInstanceRef.current = map;
 
-        // @ts-ignore
-        const mcg = L.markerClusterGroup({
-            maxClusterRadius: 50,
-            spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false,
-        });
+        const mcg = createMarkerGroup();
         markersRef.current = mcg;
         map.addLayer(mcg);
 
