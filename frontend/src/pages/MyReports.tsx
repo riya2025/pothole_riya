@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../App";
 import { getUserIssues } from "../services/api";
 import { issueIcon, issueColor, formatDate } from "../utils/helpers";
@@ -26,9 +27,12 @@ export default function MyReports() {
 
     return (
         <div className="dashboard-page">
-            <div className="dashboard-header">
-                <h1>📊 My Civic Reports</h1>
-                <p>Track the status and progress of the issues you have reported.</p>
+            <div className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+                <div>
+                    <h1>My Civic Reports</h1>
+                    <p>Track the status and progress of the issues you have reported.</p>
+                </div>
+                <Link to="/dashboard" className="btn-primary">+ Report New Issue</Link>
             </div>
 
             {loading ? (
@@ -37,6 +41,7 @@ export default function MyReports() {
                 <div className="empty-state">
                     <span>✨</span>
                     <p>You haven't reported any issues yet.</p>
+                    <Link to="/dashboard" className="btn-primary">Report Your First Issue</Link>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

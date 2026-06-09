@@ -20,20 +20,21 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
     const [gmapsLink, setGmapsLink] = useState("");
     const [error, setError] = useState("");
     const [success, setSuccess] = useState<any>(null);
+    const [dragOver, setDragOver] = useState(false);
 
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markerRef = useRef<L.Marker | null>(null);
 
-    // Initialize Map
     useEffect(() => {
         if (!mapRef.current || mapInstanceRef.current) return;
 
-        const defaultCenter: [number, number] = [12.9716, 77.5946]; // Bangalore
+        const defaultCenter: [number, number] = [12.9716, 77.5946];
         const map = L.map(mapRef.current).setView(defaultCenter, 13);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: "© OpenStreetMap contributors"
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            attribution: "© OpenStreetMap © CARTO",
+            subdomains: "abcd",
         }).addTo(map);
 
         const marker = L.marker(defaultCenter, { draggable: true }).addTo(map);
@@ -56,7 +57,6 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
         };
     }, []);
 
-    // Sync marker with coordinates
     useEffect(() => {
         if (mapInstanceRef.current && markerRef.current && coords) {
             markerRef.current.setLatLng([coords.lat, coords.lng]);
@@ -66,47 +66,47 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
 
     const parseGmapsLink = (url: string) => {
         setGmapsLink(url);
-        // Regex to find @12.345,78.910 or similar patterns
         const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
         const match = url.match(regex);
         if (match) {
-            const lat = parseFloat(match[1]);
-            const lng = parseFloat(match[2]);
-            setCoords({ lat, lng });
+            setCoords({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
             setError("");
         } else {
-            // Also try searching for coordinates in query params q=12.3,45.6
             const qRegex = /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/;
             const qMatch = url.match(qRegex);
             if (qMatch) {
-                const lat = parseFloat(qMatch[1]);
-                const lng = parseFloat(qMatch[2]);
-                setCoords({ lat, lng });
+                setCoords({ lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) });
                 setError("");
             }
         }
     };
 
+    const processImage = async (file: File) => {
+        setImage(file);
+        setImagePreview(URL.createObjectURL(file));
+
+        try {
+            const gps = await exifr.gps(file);
+            if (gps?.latitude && gps?.longitude) {
+                setCoords({ lat: gps.latitude, lng: gps.longitude });
+                setSuccess({ type: "Location", status: "extracted", alertMsg: "Location extracted from photo metadata!" });
+                setError("");
+            }
+        } catch {
+            /* no EXIF */
+        }
+    };
+
     const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            setImage(file);
-            setImagePreview(URL.createObjectURL(file));
+        if (file) await processImage(file);
+    };
 
-            try {
-                const gps = await exifr.gps(file);
-                if (gps && gps.latitude && gps.longitude) {
-                    console.log("📍 EXIF Location detected:", gps);
-                    setCoords({ lat: gps.latitude, lng: gps.longitude });
-                    setSuccess({ type: "Location", status: "extracted", alertMsg: "Location successfully extracted from image metadata!" });
-                    setError("");
-                } else {
-                    console.log("No EXIF GPS data found in image.");
-                }
-            } catch (err) {
-                console.log("Could not extract EXIF data", err);
-            }
-        }
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file?.type.startsWith("image/")) await processImage(file);
     };
 
     const getLocation = () => {
@@ -131,6 +131,7 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
 
         setLoading(true);
         setError("");
+        setSuccess(null);
         try {
             const formData = new FormData();
             formData.append("description", description);
@@ -154,33 +155,35 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
     };
 
     return (
-        <div className="report-form-card">
-            <h2 className="section-title">📸 Report a Civic Issue</h2>
-
+        <>
             {success && (
                 <div className="alert alert-success">
-                    ✅ Issue {success.status === "created" ? "created" : "attached to existing report"}!
+                    Issue {success.status === "created" ? "created" : "attached to existing report"}!
                     <br />
                     Type: <strong>{issueIcon(success.type)} {success.type}</strong>
                     {success.address && <><br />Address: <em>{success.address}</em></>}
                 </div>
             )}
 
-            {error && <div className="alert alert-error">❌ {error}</div>}
+            {error && <div className="alert alert-error">{error}</div>}
 
             <form onSubmit={handleSubmit} className="report-form">
                 <div className="form-group">
                     <label className="form-label">Upload Image</label>
                     <div
-                        className={`image-drop-zone ${imagePreview ? "has-image" : ""}`}
+                        className={`image-drop-zone ${imagePreview ? "has-image" : ""} ${dragOver ? "drag-over" : ""}`}
                         onClick={() => document.getElementById("img-input")?.click()}
+                        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={handleDrop}
                     >
                         {imagePreview ? (
                             <img src={imagePreview} alt="Preview" className="image-preview" />
                         ) : (
                             <div className="drop-placeholder">
                                 <span className="drop-icon">📷</span>
-                                <p>Click to upload photo</p>
+                                <p>Click or drag a photo here</p>
+                                <span className="form-hint">JPEG/PNG with GPS metadata preferred</span>
                             </div>
                         )}
                     </div>
@@ -203,23 +206,21 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
                     <input
                         type="text"
                         className="form-input"
-                        placeholder="Paste Google Maps URL here..."
+                        placeholder="Paste Google Maps URL here…"
                         value={gmapsLink}
                         onChange={(e) => parseGmapsLink(e.target.value)}
                     />
-                    <small style={{ color: "#666" }}>Pasting a link will automatically move the map marker.</small>
+                    <span className="form-hint">Pasting a link will automatically move the map marker.</span>
                 </div>
 
                 <div className="form-group">
                     <label className="form-label">Location Picker *</label>
-                    <div ref={mapRef} style={{ height: "200px", borderRadius: "8px", marginBottom: "10px", border: "1px solid #ddd" }} />
-                    <p style={{ fontSize: "12px", color: "#666", marginBottom: "10px" }}>
-                        Click on map or drag the marker to set exact location.
-                    </p>
+                    <div ref={mapRef} className="location-map" />
+                    <span className="form-hint">Click on the map or drag the marker to set the exact location.</span>
 
-                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <div className="location-actions">
                         <button type="button" className="btn-locate" onClick={getLocation} disabled={locating} style={{ flex: 1 }}>
-                            {locating ? "📍 Locating…" : "📍 Use My Current Location"}
+                            {locating ? "Locating…" : "Use My Current Location"}
                         </button>
                         {coords && (
                             <a
@@ -227,24 +228,23 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="btn-secondary"
-                                style={{ display: "flex", alignItems: "center", textDecoration: "none", color: "inherit" }}
                             >
-                                📍 Verify Gmaps
+                                Verify on Maps
                             </a>
                         )}
                     </div>
 
                     {coords && (
-                        <p className="coords-text" style={{ marginTop: "10px" }}>
-                            📌 Captured: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                        <p className="coords-text">
+                            Captured: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
                         </p>
                     )}
                 </div>
 
                 <button type="submit" className="btn-primary btn-full" disabled={loading}>
-                    {loading ? "Submitting…" : "🚀 Submit Report"}
+                    {loading ? "Submitting…" : "Submit Report"}
                 </button>
             </form>
-        </div>
+        </>
     );
 }

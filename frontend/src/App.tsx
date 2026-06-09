@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import AdminIssues from "./pages/AdminIssues";
 import Dashboard from "./pages/Dashboard";
@@ -21,6 +22,28 @@ export const AuthContext = createContext<AuthContextType>({
     setUser: () => { },
 });
 
+function AppRoutes() {
+    const location = useLocation();
+    const isAuthPage = ["/login", "/register"].includes(location.pathname);
+
+    return (
+        <>
+            <Navbar />
+            <main className="main-content">
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/admin-issues" element={<AdminIssues />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/my-reports" element={<MyReports />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                </Routes>
+                {!isAuthPage && <Footer />}
+            </main>
+        </>
+    );
+}
+
 export default function App() {
     const [user, setUser] = useState<User | null>(null);
 
@@ -32,17 +55,7 @@ export default function App() {
     return (
         <AuthContext.Provider value={{ user, setUser }}>
             <BrowserRouter>
-                <Navbar />
-                <main className="main-content">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/admin-issues" element={<AdminIssues />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/my-reports" element={<MyReports />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                    </Routes>
-                </main>
+                <AppRoutes />
             </BrowserRouter>
         </AuthContext.Provider>
     );
