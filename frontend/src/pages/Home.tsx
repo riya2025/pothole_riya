@@ -1,23 +1,32 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import MapView from "../components/MapView";
-import IssueVisualCards from "../components/IssueVisualCards";
+import HeroStatsPanel from "../components/HeroStatsPanel";
+import MapLegend from "../components/MapLegend";
+import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor } from "../utils/helpers";
+import { CITIES, CITY_CENTERS, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
 
-const CITY_CENTERS: Record<string, [number, number]> = {
-    all: [17.385, 78.4867],
-    hyderabad: [17.385, 78.4867],
-    bangalore: [12.9716, 77.5946],
-};
+const cityOptions = CITIES.map((c) => ({
+    value: c.value,
+    label: c.label,
+    icon: c.value === "hyderabad" ? "📍" : c.value === "bangalore" ? "📍" : "🌐",
+}));
+
+const typeOptions = ISSUE_TYPES.map((t) => ({
+    value: t.value,
+    label: t.label,
+    icon: t.value === "all" ? "🗺️" : issueIcon(t.value),
+}));
 
 export default function Home() {
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
     const [typeFilter, setTypeFilter] = useState("all");
-    const [cityFilter, setCityFilter] = useState<"all" | "hyderabad" | "bangalore">("all");
+    const [cityFilter, setCityFilter] = useState<CityValue>("all");
     const [search, setSearch] = useState("");
     const [mapCenter, setMapCenter] = useState<[number, number]>(CITY_CENTERS.all);
     const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -31,7 +40,7 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        setMapCenter(CITY_CENTERS[cityFilter]);
+        setMapCenter(CITY_CENTERS[cityFilter] || CITY_CENTERS.all);
     }, [cityFilter]);
 
     const filtered = useMemo(() => {
@@ -72,33 +81,39 @@ export default function Home() {
                             <Link to="/login" className="btn-outline">Sign In</Link>
                         </div>
                     </div>
-                    <IssueVisualCards />
+                    <HeroStatsPanel issues={issues} />
                 </div>
             </section>
 
-            <div className="toolbar-row">
-                <span className="toolbar-label">City</span>
-                {(["all", "hyderabad", "bangalore"] as const).map((c) => (
-                    <button
-                        key={c}
-                        className={`filter-chip ${cityFilter === c ? "active" : ""}`}
-                        onClick={() => setCityFilter(c)}
-                    >
-                        {c === "all" ? "All Cities" : c.charAt(0).toUpperCase() + c.slice(1)}
-                    </button>
-                ))}
-                <div className="toolbar-divider" />
-                <span className="toolbar-label">Type</span>
-                {["all", "pothole", "garbage", "streetlight", "other"].map((t) => (
-                    <button
-                        key={t}
-                        className={`filter-chip ${typeFilter === t ? "active" : ""}`}
-                        onClick={() => setTypeFilter(t)}
-                        style={typeFilter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
-                    >
-                        {t === "all" ? "All" : `${issueIcon(t)} ${t}`}
-                    </button>
-                ))}
+            <div className="filter-toolbar">
+                <FilterSelect
+                    label="City"
+                    value={cityFilter}
+                    onChange={(v) => setCityFilter(v as CityValue)}
+                    options={cityOptions}
+                    id="home-city-filter"
+                />
+                <FilterSelect
+                    label="Issue Type"
+                    value={typeFilter}
+                    onChange={setTypeFilter}
+                    options={typeOptions}
+                    id="home-type-filter"
+                />
+                <div className="filter-search-group">
+                    <label className="filter-select-label" htmlFor="home-search">Search</label>
+                    <input
+                        id="home-search"
+                        type="text"
+                        className="search-input filter-search-input"
+                        placeholder="Address, type, city…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="filter-result-badge">
+                    {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+                </div>
             </div>
 
             <div className="map-layout">
@@ -117,15 +132,7 @@ export default function Home() {
                                 onMarkerClick={(issue) => setSelectedId(issue.id)}
                                 onViewDetails={(issue) => setDetailId(issue.id)}
                             />
-                            <div className="map-legend">
-                                <div className="map-legend-title">Issue Types</div>
-                                {(["pothole", "garbage", "streetlight", "other"] as const).map((t) => (
-                                    <div key={t} className="legend-item">
-                                        <span className="legend-dot" style={{ background: issueColor(t), color: issueColor(t) }} />
-                                        {issueIcon(t)} {t}
-                                    </div>
-                                ))}
-                            </div>
+                            <MapLegend />
                         </>
                     )}
                 </div>
@@ -134,13 +141,6 @@ export default function Home() {
                     <div className="sidebar-header">
                         <h3>Issues{cityFilter !== "all" ? ` in ${cityFilter}` : ""}</h3>
                         <span className="sidebar-count">{filtered.length} issue{filtered.length !== 1 ? "s" : ""}</span>
-                        <input
-                            type="text"
-                            className="search-input"
-                            placeholder="Search by address or type…"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
                     </div>
                     <div className="issue-sidebar-list">
                         {loading ? (

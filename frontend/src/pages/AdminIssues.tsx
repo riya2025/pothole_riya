@@ -2,11 +2,25 @@ import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../App";
 import IssueMarker from "../components/IssueMarker";
-import IssueVisualCards from "../components/IssueVisualCards";
+import HeroStatsPanel from "../components/HeroStatsPanel";
+import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
-import { issueIcon, issueColor } from "../utils/helpers";
+import { issueIcon } from "../utils/helpers";
+import { CITIES, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
+
+const cityOptions = CITIES.map((c) => ({
+    value: c.value,
+    label: c.label,
+    icon: c.value === "all" ? "🌐" : "📍",
+}));
+
+const typeOptions = ISSUE_TYPES.map((t) => ({
+    value: t.value,
+    label: t.label,
+    icon: t.value === "all" ? "🗺️" : issueIcon(t.value),
+}));
 
 export default function AdminIssues() {
     const { user } = useContext(AuthContext);
@@ -21,7 +35,7 @@ export default function AdminIssues() {
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
     const [typeFilter, setTypeFilter] = useState("all");
-    const [cityFilter, setCityFilter] = useState<"all" | "hyderabad" | "bangalore">("all");
+    const [cityFilter, setCityFilter] = useState<CityValue>("all");
     const [search, setSearch] = useState("");
     const [detailId, setDetailId] = useState<number | null>(null);
 
@@ -59,41 +73,36 @@ export default function AdminIssues() {
                     <h1>All Reported Issues</h1>
                     <p>Browse civic issues reported across Hyderabad and Bangalore.</p>
                 </div>
-                <IssueVisualCards compact />
+                <HeroStatsPanel issues={issues} compact />
             </section>
 
-            <div className="toolbar-row" style={{ borderRadius: "var(--radius-lg)", marginBottom: "24px", border: "1px solid var(--border)" }}>
-                <span className="toolbar-label">City</span>
-                {(["all", "hyderabad", "bangalore"] as const).map((c) => (
-                    <button
-                        key={c}
-                        className={`filter-chip ${cityFilter === c ? "active" : ""}`}
-                        onClick={() => setCityFilter(c)}
-                    >
-                        {c === "all" ? "All Cities" : c.charAt(0).toUpperCase() + c.slice(1)}
-                    </button>
-                ))}
-                <div className="toolbar-divider" />
-                <span className="toolbar-label">Type</span>
-                {["all", "pothole", "garbage", "streetlight", "other"].map((t) => (
-                    <button
-                        key={t}
-                        className={`filter-chip ${typeFilter === t ? "active" : ""}`}
-                        onClick={() => setTypeFilter(t)}
-                        style={typeFilter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
-                    >
-                        {t === "all" ? "All" : `${issueIcon(t)} ${t}`}
-                    </button>
-                ))}
-                <div className="toolbar-divider" />
-                <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Search issues…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={{ maxWidth: "280px", flex: 1 }}
+            <div className="filter-toolbar" style={{ borderRadius: "var(--radius-lg)", marginBottom: "24px", border: "1px solid var(--border)" }}>
+                <FilterSelect
+                    label="City"
+                    value={cityFilter}
+                    onChange={(v) => setCityFilter(v as CityValue)}
+                    options={cityOptions}
                 />
+                <FilterSelect
+                    label="Issue Type"
+                    value={typeFilter}
+                    onChange={setTypeFilter}
+                    options={typeOptions}
+                />
+                <div className="filter-search-group">
+                    <label className="filter-select-label" htmlFor="admin-search">Search</label>
+                    <input
+                        id="admin-search"
+                        type="text"
+                        className="search-input filter-search-input"
+                        placeholder="Search issues…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+                <div className="filter-result-badge">
+                    {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+                </div>
             </div>
 
             {loading ? (

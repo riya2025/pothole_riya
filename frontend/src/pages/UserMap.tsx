@@ -4,8 +4,23 @@ import { AuthContext } from "../App";
 import MapView from "../components/MapView";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
+import FilterSelect from "../components/FilterSelect";
+import MapLegend from "../components/MapLegend";
 import { issueIcon, issueColor, filterWithinRadius, haversineM } from "../utils/helpers";
+import { CITIES, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
+
+const cityOptions = CITIES.map((c) => ({
+    value: c.value,
+    label: c.label,
+    icon: c.value === "all" ? "🌐" : "📍",
+}));
+
+const typeOptions = ISSUE_TYPES.map((t) => ({
+    value: t.value,
+    label: t.label,
+    icon: t.value === "all" ? "🗺️" : issueIcon(t.value),
+}));
 
 const RADIUS_M = 20;
 const MAP_ZOOM = 18;
@@ -18,7 +33,7 @@ export default function UserMap() {
     const [loading, setLoading] = useState(true);
     const [locating, setLocating] = useState(true);
     const [userPos, setUserPos] = useState<[number, number] | null>(null);
-    const [cityFilter, setCityFilter] = useState<"all" | "hyderabad" | "bangalore">("all");
+    const [cityFilter, setCityFilter] = useState<CityValue>("all");
     const [typeFilter, setTypeFilter] = useState("all");
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
@@ -88,29 +103,22 @@ export default function UserMap() {
                 <div className="user-map-badge">{nearbyIssues.length} nearby</div>
             </div>
 
-            <div className="toolbar-row">
-                <span className="toolbar-label">City</span>
-                {(["all", "hyderabad", "bangalore"] as const).map((c) => (
-                    <button
-                        key={c}
-                        className={`filter-chip ${cityFilter === c ? "active" : ""}`}
-                        onClick={() => setCityFilter(c)}
-                    >
-                        {c === "all" ? "All Cities" : c.charAt(0).toUpperCase() + c.slice(1)}
-                    </button>
-                ))}
-                <div className="toolbar-divider" />
-                <span className="toolbar-label">Type</span>
-                {["all", "pothole", "garbage", "streetlight", "other"].map((t) => (
-                    <button
-                        key={t}
-                        className={`filter-chip ${typeFilter === t ? "active" : ""}`}
-                        onClick={() => setTypeFilter(t)}
-                        style={typeFilter === t && t !== "all" ? { background: issueColor(t), borderColor: issueColor(t) } : {}}
-                    >
-                        {t === "all" ? "All" : `${issueIcon(t)} ${t}`}
-                    </button>
-                ))}
+            <div className="filter-toolbar">
+                <FilterSelect
+                    label="City"
+                    value={cityFilter}
+                    onChange={(v) => setCityFilter(v as CityValue)}
+                    options={cityOptions}
+                />
+                <FilterSelect
+                    label="Issue Type"
+                    value={typeFilter}
+                    onChange={setTypeFilter}
+                    options={typeOptions}
+                />
+                <div className="filter-result-badge">
+                    {nearbyIssues.length} within {RADIUS_M}m
+                </div>
             </div>
 
             <div className="map-layout user-map-layout">
@@ -121,16 +129,19 @@ export default function UserMap() {
                             <p>{locating ? "Getting your location…" : "Loading issues…"}</p>
                         </div>
                     ) : userPos ? (
-                        <MapView
-                            issues={nearbyIssues}
-                            mapCenter={userPos}
-                            mapZoom={MAP_ZOOM}
-                            selectedId={selectedId}
-                            showRadius={RADIUS_M}
-                            userPosition={userPos}
-                            onMarkerClick={(issue) => setSelectedId(issue.id)}
-                            onViewDetails={(issue) => setDetailId(issue.id)}
-                        />
+                        <>
+                            <MapView
+                                issues={nearbyIssues}
+                                mapCenter={userPos}
+                                mapZoom={MAP_ZOOM}
+                                selectedId={selectedId}
+                                showRadius={RADIUS_M}
+                                userPosition={userPos}
+                                onMarkerClick={(issue) => setSelectedId(issue.id)}
+                                onViewDetails={(issue) => setDetailId(issue.id)}
+                            />
+                            <MapLegend />
+                        </>
                     ) : null}
                 </div>
 
