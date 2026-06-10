@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { issueColor } from "../utils/helpers";
+import { issueColor, issueImageUrl } from "../utils/helpers";
+import IssueTypeIcon from "./IssueTypeIcon";
 
 const LEGEND_TYPES = ["pothole", "garbage", "streetlight", "other"] as const;
 
@@ -37,7 +38,11 @@ export default function MapLegend({ activeType = "all", onTypeSelect }: MapLegen
                                 onClick={() => onTypeSelect?.(t)}
                                 aria-pressed={isActive}
                             >
-                                <span className="legend-chip-dot" />
+                                {issueImageUrl(t) ? (
+                                    <IssueTypeIcon type={t} size={18} className="legend-chip-thumb" />
+                                ) : (
+                                    <span className="legend-chip-dot" />
+                                )}
                                 <span className="legend-chip-label">{t}</span>
                             </button>
                         );

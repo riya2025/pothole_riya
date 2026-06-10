@@ -5,19 +5,19 @@ const GALLERY_ITEMS = [
     {
         type: "pothole",
         label: "Potholes",
-        image: "/assets/pothole.jpg",
+        image: "/assets/pothole.png",
         blurb: "Road damage & cracks",
     },
     {
         type: "streetlight",
         label: "Streetlights",
-        image: "/assets/streetlight.svg",
+        image: "/assets/streetlight.png",
         blurb: "Broken or dim lights",
     },
     {
         type: "garbage",
         label: "Garbage",
-        image: "/assets/garbage.svg",
+        image: "/assets/garbage.jpg",
         blurb: "Waste & dumping",
     },
 ] as const;
