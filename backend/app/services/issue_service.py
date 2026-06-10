@@ -27,8 +27,8 @@ async def handle_report(
     db = sessions[city]()
 
     try:
-        # 2. Classify via Groq
-        issue_type = await classify_issue(description)
+        # 2. Classify via Groq (or keyword fallback)
+        issue_type, classification_source = await classify_issue(description)
 
         # 3. Reverse geocode
         address = await reverse_geocode(lat, lng)
@@ -53,9 +53,12 @@ async def handle_report(
             return {
                 "issue_id": existing.id,
                 "status": "attached",
-                "address": existing.address,
+                "address": address,
                 "type": existing.type,
-                "city": city
+                "city": city,
+                "latitude": lat,
+                "longitude": lng,
+                "classification_source": classification_source,
             }
         else:
             new_issue = issue_repo.create_issue(db, issue_type, lat, lng, address)
@@ -73,7 +76,10 @@ async def handle_report(
                 "status": "created",
                 "address": address,
                 "type": issue_type,
-                "city": city
+                "city": city,
+                "latitude": lat,
+                "longitude": lng,
+                "classification_source": classification_source,
             }
     finally:
         db.close()

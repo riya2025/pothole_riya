@@ -46,3 +46,9 @@ app.include_router(social.router)
 def health_check():
     mode = "Postgres mode" if settings.POSTGRES_URL else "SQLite mode"
     return {"status": "ok", "message": f"Civic Issue Reporting API is running ({mode})"}
+
+
+@app.get("/api/health/ai", tags=["health"])
+async def ai_health_check():
+    from app.services.classification import groq_status
+    return await groq_status()

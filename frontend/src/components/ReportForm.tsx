@@ -25,44 +25,62 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const markerRef = useRef<L.Marker | null>(null);
+    const mapReadyRef = useRef(false);
+
+    const applyCoordsToMap = (lat: number, lng: number, zoom = 16) => {
+        const map = mapInstanceRef.current;
+        const marker = markerRef.current;
+        if (!map || !marker) return;
+        marker.setLatLng([lat, lng]);
+        map.setView([lat, lng], zoom, { animate: true });
+    };
 
     useEffect(() => {
         if (!mapRef.current || mapInstanceRef.current) return;
 
-        const defaultCenter: [number, number] = [12.9716, 77.5946];
-        const map = L.map(mapRef.current).setView(defaultCenter, 13);
+        const defaultCenter: [number, number] = [17.385, 78.4867];
+        const map = L.map(mapRef.current).setView(defaultCenter, 6);
 
         L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
             attribution: "© OpenStreetMap © CARTO",
             subdomains: "abcd",
         }).addTo(map);
 
-        const marker = L.marker(defaultCenter, { draggable: true }).addTo(map);
-        marker.on('dragend', () => {
+        const marker = L.marker(defaultCenter, { draggable: true, opacity: 0.35 }).addTo(map);
+        marker.on("dragend", () => {
             const position = marker.getLatLng();
+            marker.setOpacity(1);
             setCoords({ lat: position.lat, lng: position.lng });
         });
 
-        map.on('click', (e) => {
+        map.on("click", (e) => {
             marker.setLatLng(e.latlng);
+            marker.setOpacity(1);
             setCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
         });
 
         mapInstanceRef.current = map;
         markerRef.current = marker;
+        mapReadyRef.current = true;
 
         return () => {
             map.remove();
             mapInstanceRef.current = null;
+            markerRef.current = null;
+            mapReadyRef.current = false;
         };
     }, []);
 
     useEffect(() => {
-        if (mapInstanceRef.current && markerRef.current && coords) {
-            markerRef.current.setLatLng([coords.lat, coords.lng]);
-            mapInstanceRef.current.panTo([coords.lat, coords.lng]);
+        if (coords) {
+            applyCoordsToMap(coords.lat, coords.lng);
+            markerRef.current?.setOpacity(1);
         }
     }, [coords]);
+
+    useEffect(() => {
+        getLocation();
+    }, []);
 
     const parseGmapsLink = (url: string) => {
         setGmapsLink(url);
@@ -89,11 +107,10 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
             const gps = await exifr.gps(file);
             if (gps?.latitude && gps?.longitude) {
                 setCoords({ lat: gps.latitude, lng: gps.longitude });
-                setSuccess({ type: "Location", status: "extracted", alertMsg: "Location extracted from photo metadata!" });
                 setError("");
             }
         } catch {
-            /* no EXIF */
+            /* no EXIF — keep GPS / map pin */
         }
     };
 
@@ -110,6 +127,10 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
     };
 
     const getLocation = () => {
+        if (!navigator.geolocation) {
+            setError("Geolocation is not supported. Click the map or paste a Google Maps link.");
+            return;
+        }
         setLocating(true);
         setError("");
         navigator.geolocation.getCurrentPosition(
@@ -118,15 +139,19 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
                 setLocating(false);
             },
             () => {
-                setError("Could not get location. Please allow location access.");
+                setError("Could not get your location. Allow GPS, or click the map / paste a Google Maps link.");
                 setLocating(false);
-            }
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
     };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!coords) { setError("Please capture your location first."); return; }
+        if (!coords) {
+            setError("Set the issue location first — use GPS, click the map, or paste a Google Maps link.");
+            return;
+        }
         if (!description.trim()) { setError("Please add a description."); return; }
 
         setLoading(true);
@@ -158,10 +183,19 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
         <>
             {success && (
                 <div className="alert alert-success">
-                    Issue {success.status === "created" ? "created" : "attached to existing report"}!
+                    Issue {success.status === "created" ? "created" : "added to a nearby existing report"}!
                     <br />
                     Type: <strong>{issueIcon(success.type)} {success.type}</strong>
-                    {success.address && <><br />Address: <em>{success.address}</em></>}
+                    {success.classification_source && (
+                        <><br /><span className="form-hint">
+                            Classified by {success.classification_source === "groq" ? "Groq AI" : "keyword matching"}
+                            {success.classification_source === "keywords" && " (add GROQ_API_KEY on Render for smarter detection)"}
+                        </span></>
+                    )}
+                    {success.address && <><br />Location: <em>{success.address}</em></>}
+                    {success.status === "attached" && (
+                        <><br /><span className="form-hint">Same spot as another report within 10m — your description was saved.</span></>
+                    )}
                 </div>
             )}
 
@@ -214,9 +248,19 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label">Location Picker *</label>
+                    <label className="form-label">Issue location *</label>
+                    {locating && (
+                        <p className="form-hint" style={{ marginBottom: 8 }}>Getting your GPS location…</p>
+                    )}
+                    {!coords && !locating && (
+                        <p className="alert alert-error" style={{ marginBottom: 8, padding: "10px 12px" }}>
+                            Pin the exact spot — tap <strong>Use My Current Location</strong> or click the map where the garbage is.
+                        </p>
+                    )}
                     <div ref={mapRef} className="location-map" />
-                    <span className="form-hint">Click on the map or drag the marker to set the exact location.</span>
+                    <span className="form-hint">
+                        We use your GPS automatically. Drag the pin if it is not exactly on the garbage spot.
+                    </span>
 
                     <div className="location-actions">
                         <button type="button" className="btn-locate" onClick={getLocation} disabled={locating} style={{ flex: 1 }}>
