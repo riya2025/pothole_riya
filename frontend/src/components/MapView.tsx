@@ -5,6 +5,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { issueColor, issueIcon, issuesWithCoords, MapFocusPoint } from "../utils/helpers";
+import { MAP_TILE_OPTIONS, MAP_TILE_URL } from "../config/map";
 import { Issue } from "../types";
 
 function createMarkerGroup(): L.MarkerClusterGroup | L.LayerGroup {
@@ -134,11 +135,7 @@ export default function MapView({
             zoomControl: true,
         });
 
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-            attribution: "&copy; OSM &copy; CARTO",
-            maxZoom: 19,
-            subdomains: "abcd",
-        }).addTo(map);
+        L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS).addTo(map);
 
         mapInstanceRef.current = map;
 

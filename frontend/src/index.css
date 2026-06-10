@@ -627,6 +627,11 @@ a:hover {
   width: 100%;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
+  background: #f8fafc;
+}
+
+#map-container {
+  background: #f8fafc !important;
 }
 
 /* ── Spinner ───────────────────────────────────────────────────────── */
@@ -1892,24 +1897,23 @@ a:hover {
   color: var(--accent);
 }
 
-/* ── Leaflet Dark Theme ────────────────────────────────────────────── */
+/* ── Leaflet (white map) ───────────────────────────────────────────── */
 .leaflet-container {
-  background: #0d1117 !important;
+  background: #f8fafc !important;
   font-family: 'Outfit', sans-serif !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: rgba(19, 22, 32, 0.95) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
   border-radius: 12px !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
-  color: var(--text-primary) !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15) !important;
+  color: #0f172a !important;
 }
 
 .leaflet-popup-tip {
-  background: rgba(19, 22, 32, 0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
 }
 
 .leaflet-popup-close-button {
@@ -1946,7 +1950,7 @@ a:hover {
   color: var(--text-secondary);
   font-size: 16px;
   font-weight: 600;
-  background: rgba(9, 11, 16, 0.5);
+  background: rgba(248, 250, 252, 0.85);
   backdrop-filter: blur(5px);
 }
 
