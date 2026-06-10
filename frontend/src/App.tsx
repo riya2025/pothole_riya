@@ -11,7 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import MyReports from "./pages/MyReports";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import { getCurrentUser } from "./utils/helpers";
+import { restoreUserFromSession } from "./utils/authSession";
 import { User } from "./types";
 import {
     CLERK_PUBLISHABLE_KEY,
@@ -82,7 +82,7 @@ function AppInner() {
     const [clerkSyncing, setClerkSyncing] = useState(false);
 
     useEffect(() => {
-        const u = getCurrentUser();
+        const u = restoreUserFromSession();
         if (u) setUser(u);
     }, []);
 

@@ -5,6 +5,11 @@ import { AuthContext } from "../App";
 import { clerkSync } from "../services/api";
 import { parseJwt } from "../utils/helpers";
 import { CLERK_AFTER_AUTH_URL } from "../config/clerk";
+import {
+    clearAuthSession,
+    hasValidSessionForClerk,
+    persistAuthSession,
+} from "../utils/authSession";
 
 export default function ClerkAuthBridge() {
     const { user: clerkUser, isSignedIn, isLoaded } = useUser();
@@ -17,7 +22,7 @@ export default function ClerkAuthBridge() {
     useEffect(() => {
         setLogout(() => () => {
             syncedClerkIdRef.current = null;
-            localStorage.removeItem("token");
+            clearAuthSession();
             setUser(null);
             signOut().catch(() => undefined).finally(() => navigate("/"));
         });
@@ -38,6 +43,19 @@ export default function ClerkAuthBridge() {
         if (syncedClerkIdRef.current === clerkUser.id) return;
 
         const name = clerkUser.fullName || clerkUser.firstName || email.split("@")[0];
+
+        if (hasValidSessionForClerk(clerkUser.id)) {
+            const token = localStorage.getItem("token")!;
+            const payload = parseJwt(token);
+            syncedClerkIdRef.current = clerkUser.id;
+            setUser({
+                id: Number(payload?.sub),
+                name,
+                email,
+            });
+            return;
+        }
+
         const authPath =
             location.pathname === "/login"
             || location.pathname.startsWith("/login/")
@@ -47,15 +65,17 @@ export default function ClerkAuthBridge() {
         setClerkSyncing(true);
         clerkSync(name, email, clerkUser.id)
             .then((res) => {
-                localStorage.setItem("token", res.data.access_token);
-                const payload = parseJwt(res.data.access_token);
-                syncedClerkIdRef.current = clerkUser.id;
-                setUser({
+                const token = res.data.access_token;
+                const payload = parseJwt(token);
+                const nextUser = {
                     id: Number(payload?.sub),
                     name,
                     email,
-                });
-                if (authPath || location.pathname !== CLERK_AFTER_AUTH_URL) {
+                };
+                persistAuthSession(nextUser, clerkUser.id, token);
+                syncedClerkIdRef.current = clerkUser.id;
+                setUser(nextUser);
+                if (authPath) {
                     navigate(CLERK_AFTER_AUTH_URL, { replace: true });
                 }
             })

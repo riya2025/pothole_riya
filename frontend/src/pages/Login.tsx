@@ -1,24 +1,19 @@
-import React, { useState, useContext, FormEvent, useEffect } from "react";
+import React, { useState, useContext, FormEvent } from "react";
 import { SignIn } from "@clerk/clerk-react";
 import { login } from "../services/api";
 import { AuthContext } from "../App";
 import { parseJwt } from "../utils/helpers";
+import { persistAuthSession } from "../utils/authSession";
 import { useNavigate, Link } from "react-router-dom";
 import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
 import { useClerkSession } from "../hooks/useClerkSession";
+import ClerkSignedInGate from "../components/ClerkSignedInGate";
 
 function ClerkLoginPanel() {
     const { clerkSyncing } = useContext(AuthContext);
-    const { isSignedIn, isLoaded: clerkLoaded } = useClerkSession();
-    const navigate = useNavigate();
+    const { isLoaded: clerkLoaded } = useClerkSession();
 
-    useEffect(() => {
-        if (clerkLoaded && isSignedIn) {
-            navigate(CLERK_AFTER_AUTH_URL, { replace: true });
-        }
-    }, [clerkLoaded, isSignedIn, navigate]);
-
-    if (!clerkLoaded || isSignedIn || clerkSyncing) {
+    if (!clerkLoaded || clerkSyncing) {
         return (
             <div className="auth-card" style={{ textAlign: "center" }}>
                 <div className="spinner" style={{ margin: "24px auto" }} />
@@ -28,15 +23,17 @@ function ClerkLoginPanel() {
     }
 
     return (
-        <div className="clerk-auth-container">
-            <SignIn
-                routing="path"
-                path="/login"
-                signUpUrl="/register"
-                fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-                appearance={clerkAppearance}
-            />
-        </div>
+        <ClerkSignedInGate mode="login">
+            <div className="clerk-auth-container">
+                <SignIn
+                    routing="path"
+                    path="/login"
+                    signUpUrl="/register"
+                    fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                    appearance={clerkAppearance}
+                />
+            </div>
+        </ClerkSignedInGate>
     );
 }
 
@@ -53,9 +50,10 @@ function LegacyLoginForm() {
         setLoading(true); setError("");
         try {
             const res = await login(email, password);
-            localStorage.setItem("token", res.data.access_token);
             const payload = parseJwt(res.data.access_token);
-            setUser({ id: Number(payload?.sub), name: email.split("@")[0], email });
+            const nextUser = { id: Number(payload?.sub), name: email.split("@")[0], email };
+            persistAuthSession(nextUser, "legacy", res.data.access_token);
+            setUser(nextUser);
             navigate(CLERK_AFTER_AUTH_URL);
         } catch {
             setError("Invalid email or password.");

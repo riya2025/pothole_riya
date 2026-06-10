@@ -87,7 +87,7 @@ function UserMapContent({
         return result;
     }, [issues, userPos, cityFilter, typeFilter]);
 
-    if (isClerkEnabled && (!clerkLoaded || clerkSyncing || (isSignedIn && !user))) {
+    if (isClerkEnabled && !user && (!clerkLoaded || clerkSyncing || isSignedIn)) {
         return (
             <div className="loading-center" style={{ minHeight: "60vh" }}>
                 <div className="spinner" />

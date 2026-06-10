@@ -3,6 +3,34 @@ import { SignUp } from "@clerk/clerk-react";
 import { register } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
+import { useClerkSession } from "../hooks/useClerkSession";
+import ClerkSignedInGate from "../components/ClerkSignedInGate";
+
+function ClerkRegisterPanel() {
+    const { isLoaded: clerkLoaded } = useClerkSession();
+
+    if (!clerkLoaded) {
+        return (
+            <div className="auth-card" style={{ textAlign: "center" }}>
+                <div className="spinner" style={{ margin: "24px auto" }} />
+            </div>
+        );
+    }
+
+    return (
+        <ClerkSignedInGate mode="register">
+            <div className="clerk-auth-container">
+                <SignUp
+                    routing="path"
+                    path="/register"
+                    signInUrl="/login"
+                    fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                    appearance={clerkAppearance}
+                />
+            </div>
+        </ClerkSignedInGate>
+    );
+}
 
 export default function Register() {
     const [name, setName] = useState("");
@@ -37,16 +65,7 @@ export default function Register() {
                 </div>
                 <div className="auth-form-wrapper">
                     {isClerkEnabled ? (
-                        <div className="clerk-auth-container">
-                            <SignUp
-                                routing="path"
-                                path="/register"
-                                signInUrl="/login"
-                                forceRedirectUrl={CLERK_AFTER_AUTH_URL}
-                                fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-                                appearance={clerkAppearance}
-                            />
-                        </div>
+                        <ClerkRegisterPanel />
                     ) : (
                         <div className="auth-card">
                             <div className="auth-brand">📍 CivicWatch</div>

@@ -113,3 +113,5 @@ Use **REACT_APP_** prefix only (not `VITE_`).
 | Still email/password form | `REACT_APP_CLERK_PUBLISHABLE_KEY` missing on Vercel — redeploy |
 | Fallback dev host confusion | Leave as `http://localhost:3000` — safe to ignore if you only use Vercel |
 | Stuck on "Signing you in…" | Backend `/api/auth/clerk-sync` failed — check Render is running and `REACT_APP_API_URL` is correct |
+| **Second login is slow** | Fixed: app reuses saved session (no API call). Redeploy latest code. First login after Render sleep may still be slow (~30s). |
+| **Want different Google account** | On Login or Sign Up, click **Use a different Google account** (signs out first), then pick another Gmail. |
