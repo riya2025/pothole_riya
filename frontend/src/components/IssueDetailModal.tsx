@@ -2,8 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { getIssueDetail } from "../services/api";
 import ReportImage from "./ReportImage";
-import { issueColor, formatDate } from "../utils/helpers";
-import IssueTypeIcon from "./IssueTypeIcon";
+import { issueIcon, issueColor, formatDate } from "../utils/helpers";
 import { IssueDetail } from "../types";
 
 interface IssueDetailModalProps {
@@ -96,15 +95,8 @@ export default function IssueDetailModal({ issueId, onClose }: IssueDetailModalP
                         </svg>
                         Back to map
                     </button>
-                    <h2 id="issue-detail-title" className="issue-detail-title issue-detail-title-row">
-                        {detail ? (
-                            <>
-                                <IssueTypeIcon type={detail.type} size={24} />
-                                <span>Issue details</span>
-                            </>
-                        ) : (
-                            "Issue details"
-                        )}
+                    <h2 id="issue-detail-title" className="issue-detail-title">
+                        {detail ? `${issueIcon(detail.type)} Issue details` : "Issue details"}
                     </h2>
                     <button type="button" className="issue-detail-close" onClick={handleClose} aria-label="Close">
                         ×
@@ -128,9 +120,8 @@ export default function IssueDetailModal({ issueId, onClose }: IssueDetailModalP
                         <>
                             <div className="detail-header">
                                 <div className="detail-header-badges">
-                                    <span className="issue-type-badge issue-type-badge-with-icon" style={{ background: `${color}22`, color }}>
-                                        <IssueTypeIcon type={detail.type} size={20} />
-                                        {detail.type}
+                                    <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
+                                        {issueIcon(detail.type)} {detail.type}
                                     </span>
                                     <span className={`status-badge status-${detail.status}`}>{detail.status}</span>
                                     <span className="detail-city-tag">{detail.city}</span>

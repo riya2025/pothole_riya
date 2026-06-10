@@ -1,42 +1,38 @@
 /* =====================================================================
-   CivicWatch – Production light civic UI
+   CivicWatch – Global Stylesheet (Premium Dark + Glassmorphism Theme)
    ===================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-@import './styles/animations.css';
 
 /* ── Variables ──────────────────────────────────────────────────────── */
 :root {
-  --bg-primary: #f4f7fb;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
-  --bg-input: #f1f5f9;
-  --map-surface: #ffffff;
-  --border: rgba(15, 23, 42, 0.1);
-  --border-focus: rgba(79, 70, 229, 0.45);
+  --bg-primary: #090B10;
+  --bg-surface: #131620;
+  --bg-card: rgba(23, 27, 40, 0.65);
+  --bg-input: rgba(15, 18, 26, 0.8);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.5);
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #475569;
 
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-glow: rgba(79, 70, 229, 0.15);
-  --accent-gradient: linear-gradient(135deg, #4f46e5, #7c3aed, #db2777);
+  --accent: #818cf8;
+  --accent-hover: #a5b4fc;
+  --accent-glow: rgba(99, 102, 241, 0.2);
+  --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
 
-  --success: #059669;
-  --error: #e11d48;
+  --success: #34d399;
+  --error: #fb7185;
 
-  --radius-lg: 18px;
+  --radius-lg: 16px;
   --radius: 12px;
   --radius-sm: 8px;
   --nav-height: 72px;
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.12);
-  --glass-blur: blur(14px);
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(16px);
 }
 
 /* ── Reset & Baseline ────────────────────────────────────────────────── */
@@ -70,8 +66,8 @@ body {
   font-family: 'Outfit', system-ui, sans-serif;
   background: var(--bg-primary);
   background-image:
-    radial-gradient(circle at 12% 18%, rgba(79, 70, 229, 0.07), transparent 28%),
-    radial-gradient(circle at 88% 8%, rgba(219, 39, 119, 0.05), transparent 24%);
+    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
@@ -93,7 +89,7 @@ a:hover {
 .main-content {
   margin-top: var(--nav-height);
   min-height: calc(100vh - var(--nav-height));
-  animation: fadeInUp 0.55s var(--ease-out) forwards;
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
 @keyframes fadeIn {
@@ -116,11 +112,10 @@ a:hover {
   right: 0;
   z-index: 1000;
   height: var(--nav-height);
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(9, 11, 16, 0.7);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   padding: 0 32px;
@@ -503,7 +498,7 @@ a:hover {
   display: flex;
   gap: 24px;
   padding: 16px 32px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(19, 22, 32, 0.8);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border);
@@ -512,7 +507,6 @@ a:hover {
   position: sticky;
   top: var(--nav-height);
   z-index: 10;
-  box-shadow: var(--shadow-sm);
 }
 
 .stat-item {
@@ -521,17 +515,17 @@ a:hover {
   align-items: center;
   min-width: 90px;
   padding: 8px 16px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  transition: transform 0.3s var(--ease-out), box-shadow 0.3s, border-color 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-item:hover {
   transform: translateY(-3px);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
   box-shadow: var(--shadow-sm);
-  border-color: rgba(79, 70, 229, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .stat-item.mini {
@@ -628,28 +622,18 @@ a:hover {
 
 .map-wrapper {
   position: relative;
-  height: 52vh;
-  min-height: 420px;
-  width: calc(100% - 48px);
-  max-width: 1200px;
-  margin: 0 auto 24px;
-  background: var(--map-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  height: 50vh;
+  min-height: 400px;
+  width: 100%;
+  border-bottom: 1px solid var(--border);
   overflow: hidden;
-  animation: mapReveal 0.65s var(--ease-out) both;
-}
-
-#map-container {
-  background: #f8fafc !important;
 }
 
 /* ── Spinner ───────────────────────────────────────────────────────── */
 .spinner {
   width: 44px;
   height: 44px;
-  border: 3px solid rgba(79, 70, 229, 0.12);
+  border: 3px solid rgba(255, 255, 255, 0.08);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -665,7 +649,6 @@ a:hover {
   padding: 48px 32px 40px;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .hero-section::before {
@@ -673,8 +656,8 @@ a:hover {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 80% at 10% 50%, rgba(79, 70, 229, 0.08), transparent),
-    radial-gradient(ellipse 50% 60% at 90% 30%, rgba(219, 39, 119, 0.06), transparent);
+    radial-gradient(ellipse 60% 80% at 10% 50%, rgba(99, 102, 241, 0.15), transparent),
+    radial-gradient(ellipse 50% 60% at 90% 30%, rgba(168, 85, 247, 0.12), transparent);
   pointer-events: none;
 }
 
@@ -751,10 +734,14 @@ a:hover {
   padding: 0;
   text-align: left;
   font-family: inherit;
-  transition: transform 0.35s var(--ease-out), border-color 0.25s, box-shadow 0.35s;
-  animation: fadeInUp 0.55s var(--ease-out) both;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s, box-shadow 0.35s;
+  animation: galleryFadeIn 0.5s ease backwards;
   animation-delay: var(--gallery-delay, 0ms);
-  box-shadow: var(--shadow-sm);
+}
+
+@keyframes galleryFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hero-gallery-card:hover {
@@ -828,14 +815,9 @@ a:hover {
   align-items: center;
   gap: 24px;
   padding: 14px 32px;
-  max-width: 1400px;
-  margin: 0 auto 8px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  background: rgba(19, 22, 32, 0.6);
+  border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
-  animation: fadeInUp 0.5s var(--ease-out) both;
 }
 
 .platform-stat {
@@ -904,13 +886,8 @@ a:hover {
   align-items: end;
   gap: 16px;
   padding: 16px 32px;
-  max-width: 1400px;
-  margin: 0 auto 16px;
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  animation: fadeInUp 0.5s var(--ease-out) 0.08s both;
+  border-bottom: 1px solid var(--border);
 }
 
 .filter-select-group,
@@ -1458,20 +1435,13 @@ a:hover {
   display: grid;
   grid-template-columns: 1fr 360px;
   min-height: calc(100vh - var(--nav-height) - 200px);
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 16px 24px;
-  gap: 0;
-  animation: fadeInUp 0.6s var(--ease-out) 0.1s both;
 }
 
 .map-layout .map-wrapper {
   height: auto;
   min-height: 500px;
-  width: 100%;
-  margin: 0;
   border-bottom: none;
-  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  border-right: 1px solid var(--border);
 }
 
 .issue-sidebar {
@@ -1479,11 +1449,6 @@ a:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-left: none;
-  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
-  box-shadow: var(--shadow-md);
-  animation: slideInRight 0.55s var(--ease-out) 0.15s both;
 }
 
 .sidebar-header {
@@ -1542,16 +1507,14 @@ a:hover {
   border-radius: var(--radius);
   padding: 14px 16px;
   cursor: pointer;
-  transition: transform 0.2s var(--ease-out), box-shadow 0.2s, border-color 0.2s, background 0.2s;
+  transition: all 0.2s;
   border-left: 3px solid transparent;
 }
 
 .sidebar-issue-item:hover,
 .sidebar-issue-item.active {
-  border-color: rgba(79, 70, 229, 0.2);
-  background: #f8fafc;
-  transform: translateX(2px);
-  box-shadow: var(--shadow-sm);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
   transform: translateX(2px);
 }
 
@@ -1623,14 +1586,13 @@ a:hover {
   right: 16px;
   z-index: 500;
   max-width: 100%;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(9, 11, 16, 0.92);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
-  animation: fadeInUp 0.5s var(--ease-out) 0.2s both;
 }
 
 .map-legend.collapsed {
@@ -1681,7 +1643,7 @@ a:hover {
   align-items: center;
   gap: 6px;
   padding: 6px 12px 6px 8px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
   border-radius: 20px;
   font-size: 12px;
@@ -1691,21 +1653,18 @@ a:hover {
   white-space: nowrap;
   cursor: pointer;
   font-family: inherit;
-  transition: transform 0.2s var(--ease-out), border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition: all 0.2s;
 }
 
 .legend-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
   border-color: var(--chip-color);
   color: var(--text-primary);
 }
 
 .legend-chip.active {
-  background: color-mix(in srgb, var(--chip-color) 14%, #ffffff);
+  background: color-mix(in srgb, var(--chip-color) 18%, transparent);
   border-color: var(--chip-color);
-  color: var(--text-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip-color) 20%, transparent);
+  color: #fff;
 }
 
 .legend-chip-dot {
@@ -1715,38 +1674,6 @@ a:hover {
   background: var(--chip-color);
   box-shadow: 0 0 6px var(--chip-color);
   flex-shrink: 0;
-}
-
-.legend-chip-thumb {
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--chip-color) 40%, transparent);
-}
-
-.issue-type-icon {
-  object-fit: cover;
-  border-radius: 6px;
-  flex-shrink: 0;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.issue-type-badge-with-icon {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.issue-type-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.issue-detail-title-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .legend-chip-icon {
@@ -1996,35 +1923,16 @@ a:hover {
 .marker-cluster-small,
 .marker-cluster-medium,
 .marker-cluster-large {
-  background: rgba(79, 70, 229, 0.15) !important;
+  background: rgba(99, 102, 241, 0.2) !important;
 }
 
 .marker-cluster-small div,
 .marker-cluster-medium div,
 .marker-cluster-large div {
-  background: #4f46e5 !important;
+  background: rgba(99, 102, 241, 0.6) !important;
   color: #fff !important;
   font-weight: 700 !important;
   font-family: 'Outfit', sans-serif !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
-}
-
-.leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border-radius: 12px !important;
-  box-shadow: var(--shadow-md) !important;
-  border: 1px solid var(--border) !important;
-}
-
-.leaflet-popup-tip {
-  background: #ffffff !important;
-  border: 1px solid var(--border) !important;
-}
-
-.leaflet-container {
-  font-family: 'Outfit', system-ui, sans-serif !important;
-  background: #f8fafc !important;
 }
 
 .map-loading {
@@ -2038,9 +1946,8 @@ a:hover {
   color: var(--text-secondary);
   font-size: 16px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(6px);
-  z-index: 400;
+  background: rgba(9, 11, 16, 0.5);
+  backdrop-filter: blur(5px);
 }
 
 /* ── Dashboard Page ──────────────────────────────────────────────────── */
@@ -2541,16 +2448,10 @@ a:hover {
   font-weight: 600;
   color: var(--success);
   margin-top: 10px;
-  background: rgba(5, 150, 105, 0.1);
+  background: rgba(52, 211, 153, 0.1);
   padding: 6px 12px;
   border-radius: 6px;
   display: inline-block;
-}
-
-.user-map-layout .map-wrapper {
-  width: 100%;
-  margin: 0;
-  border-radius: var(--radius-lg);
 }
 
 /* ── Responsive Modifications ────────────────────────────────────────── */
@@ -2585,14 +2486,10 @@ a:hover {
     min-height: 45vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    width: 100%;
   }
 
   .issue-sidebar {
     max-height: 400px;
-    border-left: 1px solid var(--border);
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   }
 
   .report-page-split {

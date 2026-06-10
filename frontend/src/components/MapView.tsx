@@ -4,15 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import {
-    issueColor,
-    issueIcon,
-    issueImageUrl,
-    issueMarkerInnerHtml,
-    issuesWithCoords,
-    MapFocusPoint,
-} from "../utils/helpers";
-import { MAP_TILE_OPTIONS, MAP_TILE_URL } from "../config/map";
+import { issueColor, issueIcon, issuesWithCoords, MapFocusPoint } from "../utils/helpers";
 import { Issue } from "../types";
 
 function createMarkerGroup(): L.MarkerClusterGroup | L.LayerGroup {
@@ -60,10 +52,10 @@ function buildMarkerIcon(issue: Issue, isSelected: boolean) {
       width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;
       transform:rotate(-45deg);
       border:3px solid #fff;
-      box-shadow:0 ${isSelected ? "6px 18px" : "3px 10px"} ${isSelected ? color + "55" : "rgba(15,23,42,0.28)"};
+      box-shadow:0 ${isSelected ? "4px 16px" : "2px 8px"} ${isSelected ? color + "88" : "rgba(0,0,0,0.4)"};
       display:flex;align-items:center;justify-content:center;
     ">
-      ${issueMarkerInnerHtml(issue.type, isSelected ? 18 : 14)}
+      <span style="transform:rotate(45deg);font-size:${isSelected ? "16px" : "14px"};">${issueIcon(issue.type)}</span>
     </div>`,
         className: "",
         iconSize: [size, size],
@@ -74,23 +66,19 @@ function buildMarkerIcon(issue: Issue, isSelected: boolean) {
 
 function buildPopupHtml(issue: Issue) {
     const color = issueColor(issue.type);
-    const thumb = issueImageUrl(issue.type);
-    const titleIcon = thumb
-        ? `<img src="${thumb}" alt="" style="width:28px;height:28px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px;" />`
-        : `${issueIcon(issue.type)} `;
     return `
     <div class="leaflet-popup-inner" style="font-family:Outfit,sans-serif;min-width:240px;padding:4px">
-      <h3 style="margin:0 0 8px;color:${color};text-transform:capitalize;font-size:16px;font-weight:700;display:flex;align-items:center;">
-        ${titleIcon}<span>${issue.type}</span>
+      <h3 style="margin:0 0 8px;color:${color};text-transform:capitalize;font-size:16px;font-weight:700;">
+        ${issueIcon(issue.type)} ${issue.type}
       </h3>
-      <p style="margin:0 0 10px;font-size:13px;color:#475569;line-height:1.5;">${issue.address || "Unknown location"}</p>
+      <p style="margin:0 0 10px;font-size:13px;color:#94A3B8;line-height:1.5;">${issue.address || "Unknown location"}</p>
       <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap;margin-bottom:12px;">
-        <span style="background:${color}18;color:${color};padding:4px 10px;border-radius:12px;font-weight:600;text-transform:capitalize;">${issue.status}</span>
-        <span style="background:#f1f5f9;color:#64748b;padding:4px 10px;border-radius:12px;font-weight:600;">${issue.report_count} report${issue.report_count !== 1 ? "s" : ""}</span>
+        <span style="background:${color}22;color:${color};padding:4px 10px;border-radius:12px;font-weight:600;text-transform:capitalize;">${issue.status}</span>
+        <span style="background:rgba(255,255,255,0.06);color:#94A3B8;padding:4px 10px;border-radius:12px;font-weight:600;">${issue.report_count} report${issue.report_count !== 1 ? "s" : ""}</span>
       </div>
       <button type="button" class="map-detail-btn" data-issue-id="${issue.id}" style="
         width:100%;padding:10px;border:none;border-radius:8px;
-        background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+        background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;
         font-weight:700;font-size:13px;cursor:pointer;font-family:Outfit,sans-serif;
       ">View Full Details</button>
     </div>
@@ -146,7 +134,11 @@ export default function MapView({
             zoomControl: true,
         });
 
-        L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS).addTo(map);
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            attribution: "&copy; OSM &copy; CARTO",
+            maxZoom: 19,
+            subdomains: "abcd",
+        }).addTo(map);
 
         mapInstanceRef.current = map;
 

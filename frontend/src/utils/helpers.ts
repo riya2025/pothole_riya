@@ -1,5 +1,3 @@
-import { ISSUE_IMAGES } from "../config/issueAssets";
-
 export const formatDate = (isoString: string | null): string => {
     if (!isoString) return "—";
     return new Date(isoString).toLocaleString("en-IN", {
@@ -21,9 +19,6 @@ export const issueColor = (type: string): string => {
     return map[type] || map.other;
 };
 
-export const normalizeIssueType = (type: string | null | undefined): string =>
-    (type || "other").trim().toLowerCase();
-
 export const issueIcon = (type: string): string => {
     const map: Record<string, string> = {
         pothole: "🕳️",
@@ -31,19 +26,7 @@ export const issueIcon = (type: string): string => {
         streetlight: "💡",
         other: "⚠️",
     };
-    return map[normalizeIssueType(type)] || "⚠️";
-};
-
-export const issueImageUrl = (type: string | null | undefined): string | null =>
-    ISSUE_IMAGES[normalizeIssueType(type)] ?? null;
-
-/** For Leaflet HTML markers — photo thumb or emoji fallback */
-export const issueMarkerInnerHtml = (type: string, sizePx: number): string => {
-    const src = issueImageUrl(type);
-    if (src) {
-        return `<img src="${src}" alt="" style="width:${sizePx}px;height:${sizePx}px;object-fit:cover;border-radius:4px;transform:rotate(45deg);display:block;" />`;
-    }
-    return `<span style="transform:rotate(45deg);font-size:${sizePx}px;display:block;line-height:1;">${issueIcon(type)}</span>`;
+    return map[type] || "⚠️";
 };
 
 export const buildTweetUrl = (text: string): string => {
@@ -82,6 +65,9 @@ export const filterWithinRadius = <T extends { lat: number | null; lng: number |
             item.lng != null &&
             haversineM(centerLat, centerLng, item.lat, item.lng) <= radiusM
     );
+
+export const normalizeIssueType = (type: string | null | undefined): string =>
+    (type || "other").trim().toLowerCase();
 
 export type MapFocusPoint = { lat: number; lng: number; zoom?: number };
 

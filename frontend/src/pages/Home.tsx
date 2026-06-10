@@ -7,8 +7,7 @@ import MapLegend from "../components/MapLegend";
 import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
-import { issueColor, normalizeIssueType } from "../utils/helpers";
-import IssueTypeIcon from "../components/IssueTypeIcon";
+import { issueIcon, issueColor, normalizeIssueType } from "../utils/helpers";
 import { CITIES, CITY_CENTERS, CITY_ZOOM, ISSUE_TYPES, CityValue } from "../config/filters";
 import { MapFocusPoint } from "../utils/helpers";
 import { Issue } from "../types";
@@ -247,7 +246,7 @@ export default function Home() {
                                         }}
                                     >
                                         <div className="sidebar-issue-type" style={{ color }}>
-                                            <IssueTypeIcon type={issue.type} size={20} /> {issue.type}
+                                            {issueIcon(issue.type)} {issue.type}
                                         </div>
                                         <div className="sidebar-issue-address">
                                             {issue.address || "Unknown location"}

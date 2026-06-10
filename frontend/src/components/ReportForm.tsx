@@ -1,10 +1,9 @@
 import React, { useState, useContext, ChangeEvent, FormEvent, useEffect, useRef } from "react";
 import { reportIssue } from "../services/api";
 import { AuthContext } from "../App";
-import IssueTypeIcon from "./IssueTypeIcon";
+import { issueIcon } from "../utils/helpers";
 import exifr from 'exifr';
 import L from "leaflet";
-import { MAP_TILE_OPTIONS, MAP_TILE_URL } from "../config/map";
 
 interface ReportFormProps {
     onSuccess?: (data: any) => void;
@@ -42,7 +41,10 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
         const defaultCenter: [number, number] = [17.385, 78.4867];
         const map = L.map(mapRef.current).setView(defaultCenter, 6);
 
-        L.tileLayer(MAP_TILE_URL, MAP_TILE_OPTIONS).addTo(map);
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            attribution: "© OpenStreetMap © CARTO",
+            subdomains: "abcd",
+        }).addTo(map);
 
         const marker = L.marker(defaultCenter, { draggable: true, opacity: 0.35 }).addTo(map);
         marker.on("dragend", () => {
@@ -183,7 +185,7 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
                 <div className="alert alert-success">
                     Issue {success.status === "created" ? "created" : "added to a nearby existing report"}!
                     <br />
-                    Type: <strong className="issue-type-inline"><IssueTypeIcon type={success.type} size={20} /> {success.type}</strong>
+                    Type: <strong>{issueIcon(success.type)} {success.type}</strong>
                     {success.classification_source && (
                         <><br /><span className="form-hint">
                             Classified by {success.classification_source === "groq" ? "Groq AI" : "keyword matching"}

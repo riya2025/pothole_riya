@@ -2,8 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../App";
 import { getUserIssues } from "../services/api";
-import { issueColor, formatDate } from "../utils/helpers";
-import IssueTypeIcon from "../components/IssueTypeIcon";
+import { issueIcon, issueColor, formatDate } from "../utils/helpers";
 import { Issue } from "../types";
 
 export default function MyReports() {
@@ -54,9 +53,8 @@ export default function MyReports() {
                             <div key={issue.report_id || issue.id} className="issue-row">
                                 <div className="issue-row-header">
                                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                        <span className="issue-type-badge issue-type-badge-with-icon" style={{ background: `${color}22`, color }}>
-                                            <IssueTypeIcon type={issue.type} size={20} />
-                                            {issue.type}
+                                        <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
+                                            {issueIcon(issue.type)} {issue.type}
                                         </span>
                                         <span className="issue-address">📍 {issue.address || "Location Tracking..."}</span>
                                     </div>

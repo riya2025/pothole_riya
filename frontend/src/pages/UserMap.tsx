@@ -8,8 +8,7 @@ import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
 import FilterSelect from "../components/FilterSelect";
 import MapLegend from "../components/MapLegend";
-import { issueColor, filterWithinRadius, haversineM, normalizeIssueType } from "../utils/helpers";
-import IssueTypeIcon from "../components/IssueTypeIcon";
+import { issueIcon, issueColor, filterWithinRadius, haversineM, normalizeIssueType } from "../utils/helpers";
 import { CITIES, ISSUE_TYPES, CityValue } from "../config/filters";
 import { Issue } from "../types";
 
@@ -210,7 +209,7 @@ function UserMapContent({
                                         }}
                                     >
                                         <div className="sidebar-issue-type" style={{ color }}>
-                                            <IssueTypeIcon type={issue.type} size={20} /> {issue.type}
+                                            {issueIcon(issue.type)} {issue.type}
                                         </div>
                                         <div className="sidebar-issue-address">{issue.address || "Unknown"}</div>
                                         <div className="sidebar-issue-meta">

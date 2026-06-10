@@ -1,6 +1,5 @@
 import React from "react";
-import { issueColor, formatDate } from "../utils/helpers";
-import IssueTypeIcon from "./IssueTypeIcon";
+import { issueColor, issueIcon, formatDate } from "../utils/helpers";
 import { Report } from "../types";
 
 interface IssueMarkerProps {
@@ -17,9 +16,8 @@ export default function IssueMarker({ issue, onShare, onClick }: IssueMarkerProp
             style={{ borderLeft: `4px solid ${color}`, cursor: onClick ? 'pointer' : 'default' }}
             onClick={() => onClick && onClick(issue)}>
             <div className="issue-card-header">
-                <span className="issue-type-badge issue-type-badge-with-icon" style={{ background: `${color}22`, color }}>
-                    <IssueTypeIcon type={issue.type} size={20} />
-                    {issue.type}
+                <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
+                    {issueIcon(issue.type)} {issue.type}
                 </span>
                 <span className={`status-badge status-${issue.status}`}>{issue.status}</span>
             </div>
