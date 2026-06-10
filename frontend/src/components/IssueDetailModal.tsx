@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { getIssueDetail } from "../services/api";
-import { issueIcon, issueColor, formatDate, resolveMediaUrl } from "../utils/helpers";
+import ReportImage from "./ReportImage";
+import { issueIcon, issueColor, formatDate } from "../utils/helpers";
 import { IssueDetail } from "../types";
 
 interface IssueDetailModalProps {
@@ -171,7 +172,6 @@ export default function IssueDetailModal({ issueId, onClose }: IssueDetailModalP
                                 ) : (
                                     <div className="report-timeline">
                                         {detail.reports.map((report, idx) => {
-                                            const imgUrl = resolveMediaUrl(report.image_url);
                                             const reportMaps =
                                                 report.latitude != null && report.longitude != null
                                                     ? `https://www.google.com/maps?q=${report.latitude},${report.longitude}`
@@ -193,10 +193,8 @@ export default function IssueDetailModal({ issueId, onClose }: IssueDetailModalP
                                                         ) : (
                                                             <p className="form-hint">No description provided.</p>
                                                         )}
-                                                        {imgUrl && (
-                                                            <a href={imgUrl} target="_blank" rel="noopener noreferrer">
-                                                                <img src={imgUrl} alt="Report evidence" className="report-timeline-img" />
-                                                            </a>
+                                                        {report.image_url && (
+                                                            <ReportImage imageUrl={report.image_url} />
                                                         )}
                                                     </div>
                                                 </div>

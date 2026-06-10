@@ -2,11 +2,8 @@ from sqlalchemy.orm import Session
 from app.services.classification import classify_issue
 from app.services.geocoding import reverse_geocode
 from app.repositories import issue_repo, report_repo
-from app.config import settings
 from app.database import sessions
-import os
-import uuid
-import aiofiles
+from app.services.storage import save_report_image
 
 
 def get_city_from_coords(lat: float, lng: float) -> str:
@@ -36,17 +33,8 @@ async def handle_report(
         # 3. Reverse geocode
         address = await reverse_geocode(lat, lng)
 
-        # 4. Save uploaded image locally
-        image_url = None
-        if image_bytes and image_filename:
-            upload_dir = settings.UPLOAD_DIR
-            os.makedirs(upload_dir, exist_ok=True)
-            ext = os.path.splitext(image_filename)[-1] or ".jpg"
-            filename = f"{uuid.uuid4().hex}{ext}"
-            filepath = os.path.join(upload_dir, filename)
-            async with aiofiles.open(filepath, "wb") as f:
-                await f.write(image_bytes)
-            image_url = f"/uploads/{filename}"
+        # 4. Save uploaded image (Cloudinary in prod, local disk in dev)
+        image_url = await save_report_image(image_bytes, image_filename) if image_bytes else None
 
         # 5. Deduplication in the selected city database
         existing = issue_repo.find_nearby_issue(db, lat, lng, radius_meters=10.0)

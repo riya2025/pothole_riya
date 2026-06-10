@@ -13,9 +13,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { getCurrentUser } from "./utils/helpers";
 import { User } from "./types";
+import {
+    CLERK_PUBLISHABLE_KEY,
+    isClerkEnabled,
+    CLERK_AFTER_AUTH_URL,
+    CLERK_AFTER_SIGN_OUT_URL,
+} from "./config/clerk";
 import "./index.css";
-
-const CLERK_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
 
 interface AuthContextType {
     user: User | null;
@@ -35,7 +39,9 @@ function AppRoutes() {
     const location = useLocation();
     const navigate = useNavigate();
     const { setUser, setLogout } = React.useContext(AuthContext);
-    const isAuthPage = ["/login", "/register"].includes(location.pathname);
+    const isAuthPage = ["/login", "/register"].includes(location.pathname)
+        || location.pathname.startsWith("/login/")
+        || location.pathname.startsWith("/register/");
 
     useEffect(() => {
         setLogout(() => () => {
@@ -48,7 +54,7 @@ function AppRoutes() {
     return (
         <>
             <Navbar />
-            {CLERK_KEY && <ClerkAuthBridge />}
+            {isClerkEnabled && <ClerkAuthBridge />}
             <main className="main-content">
                 <Routes>
                     <Route path="/" element={<Home />} />
@@ -56,8 +62,8 @@ function AppRoutes() {
                     <Route path="/admin-issues" element={<AdminIssues />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/my-reports" element={<MyReports />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route path="/login/*" element={<Login />} />
+                    <Route path="/register/*" element={<Register />} />
                 </Routes>
                 {!isAuthPage && <Footer />}
             </main>
@@ -86,12 +92,20 @@ function AppInner() {
 }
 
 export default function App() {
-    if (CLERK_KEY) {
-        return (
-            <ClerkProvider publishableKey={CLERK_KEY}>
-                <AppInner />
-            </ClerkProvider>
-        );
+    if (!isClerkEnabled) {
+        return <AppInner />;
     }
-    return <AppInner />;
+
+    return (
+        <ClerkProvider
+            publishableKey={CLERK_PUBLISHABLE_KEY}
+            afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
+            signInFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+            signUpFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+            signInForceRedirectUrl={CLERK_AFTER_AUTH_URL}
+            signUpForceRedirectUrl={CLERK_AFTER_AUTH_URL}
+        >
+            <AppInner />
+        </ClerkProvider>
+    );
 }

@@ -1,15 +1,18 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useRef } from "react";
 import { useUser, useClerk } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../App";
 import { clerkSync } from "../services/api";
 import { parseJwt } from "../utils/helpers";
+import { CLERK_AFTER_AUTH_URL } from "../config/clerk";
 
 export default function ClerkAuthBridge() {
     const { user: clerkUser, isSignedIn, isLoaded } = useUser();
     const { signOut } = useClerk();
     const { setUser, setLogout } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+    const syncingRef = useRef(false);
 
     useEffect(() => {
         setLogout(() => () => {
@@ -20,13 +23,14 @@ export default function ClerkAuthBridge() {
     }, [signOut, setUser, setLogout, navigate]);
 
     useEffect(() => {
-        if (!isLoaded || !isSignedIn || !clerkUser) return;
+        if (!isLoaded || !isSignedIn || !clerkUser || syncingRef.current) return;
 
         const email = clerkUser.primaryEmailAddress?.emailAddress;
         if (!email) return;
 
-        const name = clerkUser.fullName || clerkUser.firstName || "User";
+        const name = clerkUser.fullName || clerkUser.firstName || email.split("@")[0];
 
+        syncingRef.current = true;
         clerkSync(name, email, clerkUser.id)
             .then((res) => {
                 localStorage.setItem("token", res.data.access_token);
@@ -36,9 +40,17 @@ export default function ClerkAuthBridge() {
                     name,
                     email,
                 });
+                if (location.pathname === "/login" || location.pathname === "/register") {
+                    navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+                }
             })
-            .catch(console.error);
-    }, [isLoaded, isSignedIn, clerkUser, setUser]);
+            .catch((err) => {
+                console.error("Clerk backend sync failed:", err);
+            })
+            .finally(() => {
+                syncingRef.current = false;
+            });
+    }, [isLoaded, isSignedIn, clerkUser, setUser, navigate, location.pathname]);
 
     return null;
 }

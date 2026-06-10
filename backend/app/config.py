@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     UPLOAD_DIR: str = "uploads"
+    # Cloudinary (recommended for Render/production — local uploads are wiped on redeploy)
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
 
     class Config:
         env_file = ".env"

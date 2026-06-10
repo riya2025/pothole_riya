@@ -2,8 +2,7 @@ import React, { useState, FormEvent } from "react";
 import { SignUp } from "@clerk/clerk-react";
 import { register } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
-
-const CLERK_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
 
 export default function Register() {
     const [name, setName] = useState("");
@@ -33,39 +32,19 @@ export default function Register() {
                     <div className="graphic-content">
                         <span className="graphic-icon">📍</span>
                         <h1>CivicWatch</h1>
-                        <p>Create your account with Google. Clerk supports two-factor verification to keep your Gmail sign-in secure.</p>
+                        <p>Create your account with Google. Clerk supports two-factor verification for Gmail sign-in.</p>
                     </div>
                 </div>
                 <div className="auth-form-wrapper">
-                    {CLERK_KEY ? (
+                    {isClerkEnabled ? (
                         <div className="clerk-auth-container">
                             <SignUp
-                                routing="hash"
+                                routing="path"
+                                path="/register"
                                 signInUrl="/login"
-                                forceRedirectUrl="/map"
-                                appearance={{
-                                    elements: {
-                                        rootBox: { width: "100%" },
-                                        card: {
-                                            background: "rgba(23, 27, 40, 0.65)",
-                                            border: "1px solid rgba(255,255,255,0.08)",
-                                            boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
-                                        },
-                                        headerTitle: { color: "#F8FAFC" },
-                                        headerSubtitle: { color: "#94A3B8" },
-                                        socialButtonsBlockButton: {
-                                            border: "1px solid rgba(255,255,255,0.08)",
-                                            background: "rgba(255,255,255,0.02)",
-                                        },
-                                        formFieldLabel: { color: "#94A3B8" },
-                                        formFieldInput: {
-                                            background: "rgba(15, 18, 26, 0.8)",
-                                            border: "1px solid rgba(255,255,255,0.08)",
-                                            color: "#F8FAFC",
-                                        },
-                                        footerActionLink: { color: "#818cf8" },
-                                    },
-                                }}
+                                forceRedirectUrl={CLERK_AFTER_AUTH_URL}
+                                fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                                appearance={clerkAppearance}
                             />
                         </div>
                     ) : (
