@@ -106,8 +106,10 @@ Use **REACT_APP_** prefix only (not `VITE_`).
 
 | Problem | Fix |
 |---------|-----|
+| **Login keeps reloading after Google** | Fixed in code: app waits for backend sync before redirecting. Push latest code and **redeploy Vercel**. Also confirm `REACT_APP_API_URL` is set on Vercel. |
 | Redirects to localhost | You filled **Development** paths but use **Production** tab with Vercel URLs |
 | Sign-out goes wrong page | Set **Sign-out URL** to `https://pothole-riya.vercel.app/` |
 | "Invalid redirect URL" | Add all URLs from Step 4 in Redirect URLs |
 | Still email/password form | `REACT_APP_CLERK_PUBLISHABLE_KEY` missing on Vercel — redeploy |
 | Fallback dev host confusion | Leave as `http://localhost:3000` — safe to ignore if you only use Vercel |
+| Stuck on "Signing you in…" | Backend `/api/auth/clerk-sync` failed — check Render is running and `REACT_APP_API_URL` is correct |

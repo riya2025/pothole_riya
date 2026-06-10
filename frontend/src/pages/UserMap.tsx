@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../App";
+import { isClerkEnabled } from "../config/clerk";
+import { useClerkSession } from "../hooks/useClerkSession";
 import MapView from "../components/MapView";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
@@ -16,8 +18,14 @@ const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }))
 const RADIUS_M = 20;
 const MAP_ZOOM = 18;
 
-export default function UserMap() {
-    const { user } = useContext(AuthContext);
+function UserMapContent({
+    clerkLoaded,
+    isSignedIn,
+}: {
+    clerkLoaded: boolean;
+    isSignedIn: boolean;
+}) {
+    const { user, clerkSyncing } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const [issues, setIssues] = useState<Issue[]>([]);
@@ -31,10 +39,13 @@ export default function UserMap() {
     const [geoError, setGeoError] = useState("");
 
     useEffect(() => {
-        if (!user) {
-            navigate("/login");
+        if (!isClerkEnabled) {
+            if (!user) navigate("/login");
+            return;
         }
-    }, [user, navigate]);
+        if (!clerkLoaded || clerkSyncing) return;
+        if (!user && !isSignedIn) navigate("/login");
+    }, [user, navigate, clerkLoaded, clerkSyncing, isSignedIn]);
 
     useEffect(() => {
         getAllIssues()
@@ -75,6 +86,15 @@ export default function UserMap() {
         }
         return result;
     }, [issues, userPos, cityFilter, typeFilter]);
+
+    if (isClerkEnabled && (!clerkLoaded || clerkSyncing || (isSignedIn && !user))) {
+        return (
+            <div className="loading-center" style={{ minHeight: "60vh" }}>
+                <div className="spinner" />
+                <p style={{ marginTop: 12, color: "#94A3B8" }}>Signing you in…</p>
+            </div>
+        );
+    }
 
     if (!user) return null;
 
@@ -182,4 +202,14 @@ export default function UserMap() {
             <IssueDetailModal issueId={detailId} onClose={() => setDetailId(null)} />
         </div>
     );
+}
+
+function UserMapWithClerk() {
+    const { isSignedIn, isLoaded } = useClerkSession();
+    return <UserMapContent clerkLoaded={isLoaded} isSignedIn={isSignedIn} />;
+}
+
+export default function UserMap() {
+    if (isClerkEnabled) return <UserMapWithClerk />;
+    return <UserMapContent clerkLoaded isSignedIn={false} />;
 }

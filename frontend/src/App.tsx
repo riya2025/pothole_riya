@@ -26,6 +26,9 @@ interface AuthContextType {
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
     logout: () => void;
     setLogout: React.Dispatch<React.SetStateAction<() => void>>;
+    /** True while Clerk session is being synced to backend JWT */
+    clerkSyncing: boolean;
+    setClerkSyncing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -33,6 +36,8 @@ export const AuthContext = createContext<AuthContextType>({
     setUser: () => { },
     logout: () => { },
     setLogout: () => { },
+    clerkSyncing: false,
+    setClerkSyncing: () => { },
 });
 
 function AppRoutes() {
@@ -74,6 +79,7 @@ function AppRoutes() {
 function AppInner() {
     const [user, setUser] = useState<User | null>(null);
     const [logoutFn, setLogoutFn] = useState<() => void>(() => () => { });
+    const [clerkSyncing, setClerkSyncing] = useState(false);
 
     useEffect(() => {
         const u = getCurrentUser();
@@ -83,7 +89,14 @@ function AppInner() {
     const logout = useCallback(() => logoutFn(), [logoutFn]);
 
     return (
-        <AuthContext.Provider value={{ user, setUser, logout, setLogout: setLogoutFn }}>
+        <AuthContext.Provider value={{
+            user,
+            setUser,
+            logout,
+            setLogout: setLogoutFn,
+            clerkSyncing,
+            setClerkSyncing,
+        }}>
             <BrowserRouter>
                 <AppRoutes />
             </BrowserRouter>
@@ -102,8 +115,6 @@ export default function App() {
             afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
             signInFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
             signUpFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-            signInForceRedirectUrl={CLERK_AFTER_AUTH_URL}
-            signUpForceRedirectUrl={CLERK_AFTER_AUTH_URL}
         >
             <AppInner />
         </ClerkProvider>

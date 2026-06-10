@@ -1,12 +1,46 @@
-import React, { useState, useContext, FormEvent } from "react";
+import React, { useState, useContext, FormEvent, useEffect } from "react";
 import { SignIn } from "@clerk/clerk-react";
 import { login } from "../services/api";
 import { AuthContext } from "../App";
 import { parseJwt } from "../utils/helpers";
 import { useNavigate, Link } from "react-router-dom";
 import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
+import { useClerkSession } from "../hooks/useClerkSession";
 
-export default function Login() {
+function ClerkLoginPanel() {
+    const { clerkSyncing } = useContext(AuthContext);
+    const { isSignedIn, isLoaded: clerkLoaded } = useClerkSession();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (clerkLoaded && isSignedIn) {
+            navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+        }
+    }, [clerkLoaded, isSignedIn, navigate]);
+
+    if (!clerkLoaded || isSignedIn || clerkSyncing) {
+        return (
+            <div className="auth-card" style={{ textAlign: "center" }}>
+                <div className="spinner" style={{ margin: "24px auto" }} />
+                <p style={{ color: "#94A3B8" }}>Signing you in…</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="clerk-auth-container">
+            <SignIn
+                routing="path"
+                path="/login"
+                signUpUrl="/register"
+                fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                appearance={clerkAppearance}
+            />
+        </div>
+    );
+}
+
+function LegacyLoginForm() {
     const { setUser } = useContext(AuthContext);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -29,6 +63,33 @@ export default function Login() {
     };
 
     return (
+        <div className="auth-card">
+            <div className="auth-brand">📍 CivicWatch</div>
+            <h2>Welcome Back</h2>
+            <p className="form-hint" style={{ textAlign: "center", marginBottom: "8px" }}>
+                Copy <code>frontend/.env.example</code> to <code>.env.local</code> and add your Clerk publishable key.
+            </p>
+            {error && <div className="alert alert-error">{error}</div>}
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label className="form-label">Email</label>
+                    <input className="form-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Password</label>
+                    <input className="form-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                </div>
+                <button type="submit" className="btn-primary btn-full" disabled={loading}>
+                    {loading ? "Signing in…" : "Sign In"}
+                </button>
+            </form>
+            <p className="auth-switch">Don't have an account? <Link to="/register">Sign Up</Link></p>
+        </div>
+    );
+}
+
+export default function Login() {
+    return (
         <div className="auth-page">
             <div className="auth-split-layout">
                 <div className="auth-graphic">
@@ -39,41 +100,7 @@ export default function Login() {
                     </div>
                 </div>
                 <div className="auth-form-wrapper">
-                    {isClerkEnabled ? (
-                        <div className="clerk-auth-container">
-                            <SignIn
-                                routing="path"
-                                path="/login"
-                                signUpUrl="/register"
-                                forceRedirectUrl={CLERK_AFTER_AUTH_URL}
-                                fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-                                appearance={clerkAppearance}
-                            />
-                        </div>
-                    ) : (
-                        <div className="auth-card">
-                            <div className="auth-brand">📍 CivicWatch</div>
-                            <h2>Welcome Back</h2>
-                            <p className="form-hint" style={{ textAlign: "center", marginBottom: "8px" }}>
-                                Copy <code>frontend/.env.example</code> to <code>.env.local</code> and add your Clerk publishable key.
-                            </p>
-                            {error && <div className="alert alert-error">{error}</div>}
-                            <form onSubmit={handleSubmit}>
-                                <div className="form-group">
-                                    <label className="form-label">Email</label>
-                                    <input className="form-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Password</label>
-                                    <input className="form-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                                </div>
-                                <button type="submit" className="btn-primary btn-full" disabled={loading}>
-                                    {loading ? "Signing in…" : "Sign In"}
-                                </button>
-                            </form>
-                            <p className="auth-switch">Don't have an account? <Link to="/register">Sign Up</Link></p>
-                        </div>
-                    )}
+                    {isClerkEnabled ? <ClerkLoginPanel /> : <LegacyLoginForm />}
                 </div>
             </div>
         </div>
