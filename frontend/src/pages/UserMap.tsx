@@ -87,11 +87,20 @@ function UserMapContent({
         return result;
     }, [issues, userPos, cityFilter, typeFilter]);
 
-    if (isClerkEnabled && !user && (!clerkLoaded || clerkSyncing || isSignedIn)) {
+    if (isClerkEnabled && !user && clerkSyncing) {
         return (
             <div className="loading-center" style={{ minHeight: "60vh" }}>
                 <div className="spinner" />
-                <p style={{ marginTop: 12, color: "#94A3B8" }}>Signing you in…</p>
+                <p style={{ marginTop: 12, color: "#94A3B8" }}>Connecting to server…</p>
+            </div>
+        );
+    }
+
+    if (isClerkEnabled && !user && !clerkLoaded) {
+        return (
+            <div className="loading-center" style={{ minHeight: "60vh" }}>
+                <div className="spinner" />
+                <p style={{ marginTop: 12, color: "#94A3B8" }}>Loading…</p>
             </div>
         );
     }
@@ -118,13 +127,19 @@ function UserMapContent({
                 <FilterSelect
                     label="City"
                     value={cityFilter}
-                    onChange={(v) => setCityFilter(v as CityValue)}
+                    onChange={(v) => {
+                        setCityFilter(v as CityValue);
+                        setSelectedId(null);
+                    }}
                     options={cityOptions}
                 />
                 <FilterSelect
                     label="Issue Type"
                     value={typeFilter}
-                    onChange={setTypeFilter}
+                    onChange={(v) => {
+                        setTypeFilter(v);
+                        setSelectedId(null);
+                    }}
                     options={typeOptions}
                 />
                 <div className="filter-result-badge">
@@ -145,13 +160,23 @@ function UserMapContent({
                                 issues={nearbyIssues}
                                 mapCenter={userPos}
                                 mapZoom={MAP_ZOOM}
+                                autoFitBounds
+                                fallbackCenter={userPos}
+                                fallbackZoom={MAP_ZOOM}
+                                maxFitZoom={MAP_ZOOM}
                                 selectedId={selectedId}
                                 showRadius={RADIUS_M}
                                 userPosition={userPos}
                                 onMarkerClick={(issue) => setSelectedId(issue.id)}
                                 onViewDetails={(issue) => setDetailId(issue.id)}
                             />
-                            <MapLegend activeType={typeFilter} onTypeSelect={(t) => setTypeFilter((p) => (p === t ? "all" : t))} />
+                            <MapLegend
+                                activeType={typeFilter}
+                                onTypeSelect={(t) => {
+                                    setTypeFilter((p) => (p === t ? "all" : t));
+                                    setSelectedId(null);
+                                }}
+                            />
                         </>
                     ) : null}
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
@@ -16,9 +16,22 @@ export default function ClerkSignedInGate({ mode, children }: Props) {
     const { isSignedIn, isLoaded } = useClerkSession();
     const { user: clerkUser } = useUser();
     const { signOut } = useClerk();
-    const { setUser } = useContext(AuthContext);
+    const { user, setUser } = useContext(AuthContext);
     const navigate = useNavigate();
     const [switching, setSwitching] = useState(false);
+
+    useEffect(() => {
+        if (user) navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+    }, [user, navigate]);
+
+    if (user) {
+        return (
+            <div className="auth-card" style={{ textAlign: "center" }}>
+                <div className="spinner" style={{ margin: "24px auto" }} />
+                <p style={{ color: "#94A3B8" }}>Opening map…</p>
+            </div>
+        );
+    }
 
     if (!isLoaded) {
         return (
@@ -71,7 +84,7 @@ export default function ClerkSignedInGate({ mode, children }: Props) {
                 Signed in as <strong style={{ color: "#F8FAFC" }}>{email}</strong>
             </p>
             <button type="button" className="btn-primary btn-full" onClick={handleContinue} style={{ marginBottom: 12 }}>
-                Continue to map
+                Continue
             </button>
             <button type="button" className="btn-outline btn-full" onClick={handleSwitchAccount}>
                 Use a different Google account

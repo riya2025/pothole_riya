@@ -69,6 +69,14 @@ export const filterWithinRadius = <T extends { lat: number | null; lng: number |
 export const normalizeIssueType = (type: string | null | undefined): string =>
     (type || "other").trim().toLowerCase();
 
+export type MapFocusPoint = { lat: number; lng: number; zoom?: number };
+
+export function issuesWithCoords<T extends { lat: number | null; lng: number | null }>(
+    issues: T[]
+): T[] {
+    return issues.filter((i) => i.lat != null && i.lng != null);
+}
+
 export const resolveMediaUrl = (url: string | null | undefined): string | null => {
     if (!url) return null;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;

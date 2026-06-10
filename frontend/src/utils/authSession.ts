@@ -26,9 +26,26 @@ export function isTokenValid(): boolean {
     return payload.exp * 1000 > Date.now();
 }
 
-/** Reuse backend JWT when Clerk user id still matches — skips slow API sync. */
-export function hasValidSessionForClerk(clerkId: string): boolean {
-    return getStoredClerkId() === clerkId && isTokenValid();
+/** Reuse backend JWT — skips slow API sync on return visits. */
+export function hasValidSessionForClerk(clerkId: string, email?: string): boolean {
+    if (!isTokenValid()) return false;
+    const profile = getStoredProfile();
+    if (!profile) return false;
+    if (email && profile.email.toLowerCase() === email.toLowerCase()) return true;
+    return getStoredClerkId() === clerkId;
+}
+
+export function hydrateUserFromToken(email: string, name: string): User | null {
+    if (!isTokenValid()) return null;
+    const token = localStorage.getItem("token")!;
+    const payload = parseJwt(token);
+    if (!payload?.sub) return null;
+    const profile = getStoredProfile();
+    return {
+        id: Number(payload.sub),
+        name: profile?.name || name,
+        email: profile?.email || email,
+    };
 }
 
 export function persistAuthSession(user: User, clerkId: string, token: string) {

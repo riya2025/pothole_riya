@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import { issueColor, issueIcon } from "../utils/helpers";
+import { issueColor, issueIcon, issuesWithCoords, MapFocusPoint } from "../utils/helpers";
 import { Issue } from "../types";
 
 function createMarkerGroup(): L.MarkerClusterGroup | L.LayerGroup {
@@ -33,6 +33,12 @@ interface MapViewProps {
     selectedId?: number | null;
     userPosition?: [number, number] | null;
     showRadius?: number;
+    /** Pan/zoom to filtered markers when filters change */
+    autoFitBounds?: boolean;
+    fallbackCenter?: [number, number];
+    fallbackZoom?: number;
+    focusPoint?: MapFocusPoint | null;
+    maxFitZoom?: number;
     onMarkerClick?: (issue: Issue) => void;
     onViewDetails?: (issue: Issue) => void;
 }
@@ -86,6 +92,11 @@ export default function MapView({
     selectedId = null,
     userPosition = null,
     showRadius,
+    autoFitBounds = false,
+    fallbackCenter,
+    fallbackZoom = 12,
+    focusPoint = null,
+    maxFitZoom = 15,
     onMarkerClick,
     onViewDetails,
 }: MapViewProps) {
@@ -154,10 +165,60 @@ export default function MapView({
     }, [openIssueDetails]);
 
     useEffect(() => {
+        if (autoFitBounds) return;
         if (mapInstanceRef.current && mapCenter) {
             mapInstanceRef.current.setView(mapCenter, mapZoom);
         }
-    }, [mapCenter, mapZoom]);
+    }, [mapCenter, mapZoom, autoFitBounds]);
+
+    useEffect(() => {
+        const map = mapInstanceRef.current;
+        if (!map) return;
+
+        if (focusPoint) {
+            map.flyTo([focusPoint.lat, focusPoint.lng], focusPoint.zoom ?? 16, { duration: 0.7 });
+            return;
+        }
+
+        if (!autoFitBounds) return;
+
+        const coords = issuesWithCoords(issues);
+        const center = fallbackCenter ?? mapCenter;
+        const zoom = fallbackZoom ?? mapZoom;
+        const fitPoints: [number, number][] = coords.map(
+            (i) => [i.lat!, i.lng!] as [number, number]
+        );
+        if (userPosition) {
+            fitPoints.push(userPosition);
+        }
+
+        if (fitPoints.length === 0) {
+            map.flyTo(center, zoom, { duration: 0.7 });
+            return;
+        }
+
+        if (fitPoints.length === 1) {
+            map.flyTo(fitPoints[0], Math.min(maxFitZoom, 16), { duration: 0.7 });
+            return;
+        }
+
+        const bounds = L.latLngBounds(fitPoints);
+        map.flyToBounds(bounds, {
+            padding: [60, 60],
+            maxZoom: maxFitZoom,
+            duration: 0.7,
+        });
+    }, [
+        issues,
+        autoFitBounds,
+        fallbackCenter,
+        fallbackZoom,
+        focusPoint,
+        mapCenter,
+        mapZoom,
+        maxFitZoom,
+        userPosition,
+    ]);
 
     useEffect(() => {
         const map = mapInstanceRef.current;

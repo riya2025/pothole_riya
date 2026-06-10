@@ -1,4 +1,4 @@
-import React, { useState, useContext, FormEvent } from "react";
+import React, { useState, useContext, FormEvent, useEffect } from "react";
 import { SignIn } from "@clerk/clerk-react";
 import { login } from "../services/api";
 import { AuthContext } from "../App";
@@ -10,10 +10,24 @@ import { useClerkSession } from "../hooks/useClerkSession";
 import ClerkSignedInGate from "../components/ClerkSignedInGate";
 
 function ClerkLoginPanel() {
-    const { clerkSyncing } = useContext(AuthContext);
+    const { user, clerkSyncing } = useContext(AuthContext);
     const { isLoaded: clerkLoaded } = useClerkSession();
+    const navigate = useNavigate();
 
-    if (!clerkLoaded || clerkSyncing) {
+    useEffect(() => {
+        if (user) navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+    }, [user, navigate]);
+
+    if (user) {
+        return (
+            <div className="auth-card" style={{ textAlign: "center" }}>
+                <div className="spinner" style={{ margin: "24px auto" }} />
+                <p style={{ color: "#94A3B8" }}>Opening map…</p>
+            </div>
+        );
+    }
+
+    if (clerkSyncing || !clerkLoaded) {
         return (
             <div className="auth-card" style={{ textAlign: "center" }}>
                 <div className="spinner" style={{ margin: "24px auto" }} />

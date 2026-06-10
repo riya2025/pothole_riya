@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     POSTGRES_URL: str = ""
     SECRET_KEY: str = "civic-issue-reporting-secret-key-2024"
     GROQ_API_KEY: str = ""
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days — fewer slow re-syncs on return visits
     UPLOAD_DIR: str = "uploads"
     # Cloudinary (recommended for Render/production — local uploads are wiped on redeploy)
     CLOUDINARY_CLOUD_NAME: str = ""

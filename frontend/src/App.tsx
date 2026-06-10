@@ -19,7 +19,14 @@ import {
     CLERK_AFTER_AUTH_URL,
     CLERK_AFTER_SIGN_OUT_URL,
 } from "./config/clerk";
+import API from "./services/api";
 import "./index.css";
+
+function warmBackend() {
+    const base = process.env.REACT_APP_API_URL;
+    if (!base) return;
+    API.get("/").catch(() => undefined);
+}
 
 interface AuthContextType {
     user: User | null;
@@ -77,13 +84,12 @@ function AppRoutes() {
 }
 
 function AppInner() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(() => restoreUserFromSession());
     const [logoutFn, setLogoutFn] = useState<() => void>(() => () => { });
     const [clerkSyncing, setClerkSyncing] = useState(false);
 
     useEffect(() => {
-        const u = restoreUserFromSession();
-        if (u) setUser(u);
+        warmBackend();
     }, []);
 
     const logout = useCallback(() => logoutFn(), [logoutFn]);

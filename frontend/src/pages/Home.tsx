@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import MapView from "../components/MapView";
 import HeroVisualGallery from "../components/HeroVisualGallery";
@@ -8,8 +8,10 @@ import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor, normalizeIssueType } from "../utils/helpers";
-import { CITIES, CITY_CENTERS, ISSUE_TYPES, CityValue } from "../config/filters";
+import { CITIES, CITY_CENTERS, CITY_ZOOM, ISSUE_TYPES, CityValue } from "../config/filters";
+import { MapFocusPoint } from "../utils/helpers";
 import { Issue } from "../types";
+import { useAutoDetectCity } from "../hooks/useAutoDetectCity";
 
 const cityOptions = CITIES.map((c) => ({ value: c.value, label: c.label }));
 const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
@@ -20,9 +22,17 @@ export default function Home() {
     const [typeFilter, setTypeFilter] = useState("all");
     const [cityFilter, setCityFilter] = useState<CityValue>("all");
     const [search, setSearch] = useState("");
-    const [mapCenter, setMapCenter] = useState<[number, number]>(CITY_CENTERS.all);
+    const [focusPoint, setFocusPoint] = useState<MapFocusPoint | null>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
+
+    const handleCityDetected = useCallback((city: CityValue) => {
+        setCityFilter(city);
+        setFocusPoint(null);
+    }, []);
+
+    const { detecting: detectingCity, detectedCity, markUserPicked } =
+        useAutoDetectCity(handleCityDetected);
 
     useEffect(() => {
         getAllIssues()
@@ -30,10 +40,6 @@ export default function Home() {
             .catch(console.error)
             .finally(() => setLoading(false));
     }, []);
-
-    useEffect(() => {
-        setMapCenter(CITY_CENTERS[cityFilter] || CITY_CENTERS.all);
-    }, [cityFilter]);
 
     const filtered = useMemo(() => {
         let result = issues;
@@ -61,9 +67,12 @@ export default function Home() {
         }
     }, [filtered, selectedId]);
 
+    const clearMapFocus = () => setFocusPoint(null);
+
     const handleTypeSelect = (type: string) => {
         setTypeFilter((prev) => (prev === type ? "all" : type));
         setSelectedId(null);
+        clearMapFocus();
     };
 
     const handleViewDetails = (issue: Issue) => {
@@ -100,12 +109,24 @@ export default function Home() {
             />
 
             <div className="filter-toolbar">
+                {detectingCity && (
+                    <span className="filter-result-badge" style={{ alignSelf: "flex-end" }}>
+                        Detecting your city…
+                    </span>
+                )}
+                {!detectingCity && detectedCity && cityFilter === detectedCity && (
+                    <span className="filter-result-badge" style={{ alignSelf: "flex-end" }}>
+                        📍 {detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1)} (from your location)
+                    </span>
+                )}
                 <FilterSelect
                     label="City"
                     value={cityFilter}
                     onChange={(v) => {
+                        markUserPicked();
                         setCityFilter(v as CityValue);
                         setSelectedId(null);
+                        clearMapFocus();
                     }}
                     options={cityOptions}
                     id="home-city-filter"
@@ -116,6 +137,7 @@ export default function Home() {
                     onChange={(v) => {
                         setTypeFilter(v);
                         setSelectedId(null);
+                        clearMapFocus();
                     }}
                     options={typeOptions}
                     id="home-type-filter"
@@ -128,7 +150,10 @@ export default function Home() {
                         className="search-input filter-search-input"
                         placeholder="Address, type, city…"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            clearMapFocus();
+                        }}
                     />
                 </div>
                 {(typeFilter !== "all" || cityFilter !== "all") && (
@@ -136,10 +161,12 @@ export default function Home() {
                         type="button"
                         className="btn-outline filter-clear-btn"
                         onClick={() => {
+                            markUserPicked();
                             setTypeFilter("all");
                             setCityFilter("all");
                             setSearch("");
                             setSelectedId(null);
+                            clearMapFocus();
                         }}
                     >
                         Clear filters
@@ -157,9 +184,12 @@ export default function Home() {
                     ) : (
                         <>
                             <MapView
-                                key={`map-${typeFilter}-${cityFilter}-${filtered.length}`}
                                 issues={filtered}
-                                mapCenter={mapCenter}
+                                autoFitBounds
+                                fallbackCenter={CITY_CENTERS[cityFilter] || CITY_CENTERS.all}
+                                fallbackZoom={CITY_ZOOM[cityFilter] ?? CITY_ZOOM.all}
+                                maxFitZoom={cityFilter === "all" && typeFilter === "all" ? 10 : 15}
+                                focusPoint={focusPoint}
                                 selectedId={selectedId}
                                 onMarkerClick={(issue) => setSelectedId(issue.id)}
                                 onViewDetails={handleViewDetails}
@@ -189,9 +219,11 @@ export default function Home() {
                                     type="button"
                                     className="btn-outline"
                                     onClick={() => {
+                                        markUserPicked();
                                         setTypeFilter("all");
                                         setCityFilter("all");
                                         setSearch("");
+                                        clearMapFocus();
                                     }}
                                 >
                                     Reset filters
@@ -208,8 +240,8 @@ export default function Home() {
                                         style={{ borderLeftColor: isActive ? color : "transparent" }}
                                         onClick={() => {
                                             setSelectedId(issue.id);
-                                            if (issue.lat && issue.lng) {
-                                                setMapCenter([issue.lat, issue.lng]);
+                                            if (issue.lat != null && issue.lng != null) {
+                                                setFocusPoint({ lat: issue.lat, lng: issue.lng, zoom: 16 });
                                             }
                                         }}
                                     >

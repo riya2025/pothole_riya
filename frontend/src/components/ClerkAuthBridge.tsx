@@ -8,6 +8,7 @@ import { CLERK_AFTER_AUTH_URL } from "../config/clerk";
 import {
     clearAuthSession,
     hasValidSessionForClerk,
+    hydrateUserFromToken,
     persistAuthSession,
 } from "../utils/authSession";
 
@@ -44,16 +45,16 @@ export default function ClerkAuthBridge() {
 
         const name = clerkUser.fullName || clerkUser.firstName || email.split("@")[0];
 
-        if (hasValidSessionForClerk(clerkUser.id)) {
-            const token = localStorage.getItem("token")!;
-            const payload = parseJwt(token);
-            syncedClerkIdRef.current = clerkUser.id;
-            setUser({
-                id: Number(payload?.sub),
-                name,
-                email,
-            });
-            return;
+        if (hasValidSessionForClerk(clerkUser.id, email)) {
+            const nextUser = hydrateUserFromToken(email, name);
+            if (nextUser) {
+                const token = localStorage.getItem("token")!;
+                persistAuthSession(nextUser, clerkUser.id, token);
+                syncedClerkIdRef.current = clerkUser.id;
+                setUser(nextUser);
+                setClerkSyncing(false);
+                return;
+            }
         }
 
         const authPath =
