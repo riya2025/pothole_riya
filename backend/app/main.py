@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routes import auth, issues, users, social
+from app.routes import auth, issues, users
 from app.config import settings
 from app.database import create_tables
 
@@ -39,7 +39,6 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 app.include_router(auth.router)
 app.include_router(issues.router)
 app.include_router(users.router)
-app.include_router(social.router)
 
 
 @app.get("/", tags=["health"])

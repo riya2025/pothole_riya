@@ -1,13 +1,11 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
 import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 import ClerkAuthBridge from "./components/ClerkAuthBridge";
 import Home from "./pages/Home";
 import UserMap from "./pages/UserMap";
 import AdminIssues from "./pages/AdminIssues";
-import Dashboard from "./pages/Dashboard";
 import ReportSuccess from "./pages/ReportSuccess";
 import MyReports from "./pages/MyReports";
 import Login from "./pages/Login";
@@ -50,13 +48,8 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 function AppRoutes() {
-    const location = useLocation();
     const navigate = useNavigate();
     const { setUser, setLogout } = React.useContext(AuthContext);
-    const isAuthPage = ["/login", "/register"].includes(location.pathname)
-        || location.pathname.startsWith("/login/")
-        || location.pathname.startsWith("/register/");
-
     useEffect(() => {
         setLogout(() => () => {
             localStorage.removeItem("token");
@@ -74,13 +67,12 @@ function AppRoutes() {
                     <Route path="/" element={<Home />} />
                     <Route path="/map" element={<UserMap />} />
                     <Route path="/admin-issues" element={<AdminIssues />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Navigate to="/map?report=1" replace />} />
                     <Route path="/report/success" element={<ReportSuccess />} />
                     <Route path="/my-reports" element={<MyReports />} />
                     <Route path="/login/*" element={<Login />} />
                     <Route path="/register/*" element={<Register />} />
                 </Routes>
-                {!isAuthPage && <Footer />}
             </main>
         </>
     );

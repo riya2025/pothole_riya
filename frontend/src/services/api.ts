@@ -39,7 +39,4 @@ export const reportIssue = (formData: FormData) =>
 export const getUserIssues = (userId: number) =>
     API.get(`/api/users/${userId}/issues`);
 
-export const generateShare = (issue_id: number, issue_type: string, address: string) =>
-    API.post("/api/social/share", { issue_id, issue_type, address });
-
 export default API;

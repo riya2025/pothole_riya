@@ -40,7 +40,7 @@ export default function ReportSuccess() {
                 <div className="report-success-card">
                     <h1>Nothing to show</h1>
                     <p className="form-hint">Submit a report first, or your session may have expired.</p>
-                    <Link to="/dashboard" className="btn-primary">Report an Issue</Link>
+                    <Link to="/map?report=1" className="btn-primary">Report an Issue</Link>
                 </div>
             </div>
         );
@@ -99,7 +99,7 @@ export default function ReportSuccess() {
                     <button
                         type="button"
                         className="btn-primary btn-full"
-                        onClick={() => navigate("/dashboard")}
+                        onClick={() => navigate("/map?report=1")}
                     >
                         Report Another Issue
                     </button>

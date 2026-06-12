@@ -32,7 +32,7 @@ export default function MyReports() {
                     <h1>My Civic Reports</h1>
                     <p>Track the status and progress of the issues you have reported.</p>
                 </div>
-                <Link to="/dashboard" className="btn-primary">+ Report New Issue</Link>
+                <Link to="/map?report=1" className="btn-primary">+ Report New Issue</Link>
             </div>
 
             {loading ? (
@@ -41,7 +41,7 @@ export default function MyReports() {
                 <div className="empty-state">
                     <span>✨</span>
                     <p>You haven't reported any issues yet.</p>
-                    <Link to="/dashboard" className="btn-primary">Report Your First Issue</Link>
+                    <Link to="/map?report=1" className="btn-primary">Report Your First Issue</Link>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

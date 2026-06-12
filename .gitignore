@@ -1,7 +1,9 @@
 # Python / Backend
 backend/__pycache__/
+backend/**/__pycache__/
 backend/.env
 backend/civic.db
+backend/*.db
 *.py[cod]
 *$py.class
 venv/
