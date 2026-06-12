@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import UserMap from "./pages/UserMap";
 import AdminIssues from "./pages/AdminIssues";
 import Dashboard from "./pages/Dashboard";
+import ReportSuccess from "./pages/ReportSuccess";
 import MyReports from "./pages/MyReports";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,6 +19,7 @@ import {
     isClerkEnabled,
     CLERK_AFTER_AUTH_URL,
     CLERK_AFTER_SIGN_OUT_URL,
+    clerkLocalization,
 } from "./config/clerk";
 import API from "./services/api";
 import "./index.css";
@@ -73,6 +75,7 @@ function AppRoutes() {
                     <Route path="/map" element={<UserMap />} />
                     <Route path="/admin-issues" element={<AdminIssues />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/report/success" element={<ReportSuccess />} />
                     <Route path="/my-reports" element={<MyReports />} />
                     <Route path="/login/*" element={<Login />} />
                     <Route path="/register/*" element={<Register />} />
@@ -118,6 +121,7 @@ export default function App() {
     return (
         <ClerkProvider
             publishableKey={CLERK_PUBLISHABLE_KEY}
+            localization={clerkLocalization}
             afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
             signInFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
             signUpFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}

@@ -1224,6 +1224,126 @@ a:hover {
   min-height: calc(100vh - var(--nav-height) - 180px);
 }
 
+.user-map-map-top {
+  height: 52vh;
+  min-height: 380px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-map-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.user-map-toolbar {
+  border-bottom: 1px solid var(--border);
+}
+
+.user-map-issue-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 20px 24px 32px;
+}
+
+/* ── Report success page ───────────────────────────────────────────── */
+.report-success-page {
+  min-height: calc(100vh - var(--nav-height) - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.report-success-card {
+  width: min(100%, 480px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  text-align: center;
+  backdrop-filter: var(--glass-blur);
+}
+
+.report-success-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 20px;
+}
+
+.report-success-card h1 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+
+.report-success-lead {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.report-success-details {
+  text-align: left;
+  background: rgba(15, 18, 26, 0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-success-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.report-success-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.report-success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-twitter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  background: #000;
+  color: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-twitter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
 /* ── Issue Detail Modal (portal, viewport-centered) ───────────────── */
 .issue-detail-overlay {
   position: fixed;
@@ -1599,6 +1719,20 @@ a:hover {
 
 .clerk-auth-container .cl-card {
   border-radius: 16px !important;
+}
+
+/* Sign-up / sign-in: placeholders only — no labels above inputs */
+.clerk-auth-container .cl-formFieldLabel,
+.clerk-auth-container .cl-formFieldLabelRow,
+.clerk-auth-container .cl-formFieldHintText {
+  display: none !important;
+}
+
+/* Hide Clerk subtitles and "Secured by Clerk" branding on auth forms */
+.clerk-auth-container .cl-headerSubtitle,
+.clerk-auth-container .cl-footerPages,
+.clerk-auth-container .cl-footer a[href*="clerk.com"] {
+  display: none !important;
 }
 
 .hero-stat-pill {
@@ -2835,6 +2969,16 @@ a:hover {
 
   .user-map-page .user-map-header {
     padding: 20px;
+  }
+
+  .user-map-map-top {
+    min-height: 320px;
+    height: 45vh;
+  }
+
+  .user-map-issue-list {
+    grid-template-columns: 1fr;
+    padding: 16px;
   }
 
   .stats-bar,

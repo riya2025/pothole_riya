@@ -42,3 +42,14 @@ export interface IssueReport {
 export interface IssueDetail extends Issue {
     reports: IssueReport[];
 }
+
+export interface ReportSubmitResult {
+    issue_id: number;
+    status: "created" | "attached";
+    address?: string | null;
+    type: string;
+    classification_source?: string | null;
+    description?: string;
+    latitude?: number;
+    longitude?: number;
+}

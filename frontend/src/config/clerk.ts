@@ -21,6 +21,28 @@ export const CLERK_AFTER_AUTH_URL = "/map";
 /** Where users land after sign-out (home / map landing) */
 export const CLERK_AFTER_SIGN_OUT_URL = "/";
 
+/** Placeholder-only labels; * marks required fields; last name is optional */
+export const clerkLocalization = {
+    formFieldInputPlaceholder__firstName: "First name *",
+    formFieldInputPlaceholder__lastName: "Last name (optional)",
+    formFieldInputPlaceholder__emailAddress: "Email address *",
+    formFieldInputPlaceholder__signUpPassword: "Create a password *",
+    formFieldInputPlaceholder__password: "Password *",
+    formFieldInputPlaceholder__emailAddress_username: "Email or username *",
+    signIn: {
+        start: {
+            subtitle: "",
+            title: "Sign in",
+        },
+    },
+    signUp: {
+        start: {
+            subtitle: "",
+            title: "Create account",
+        },
+    },
+};
+
 export const clerkAppearance = {
     variables: {
         colorPrimary: "#818cf8",
@@ -40,7 +62,8 @@ export const clerkAppearance = {
             boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
         },
         headerTitle: { color: "#F8FAFC", fontWeight: 700 },
-        headerSubtitle: { color: "#94A3B8" },
+        headerSubtitle: { display: "none" },
+        footerPages: { display: "none" },
         socialButtonsBlockButton: {
             border: "1px solid rgba(255,255,255,0.08)",
             background: "rgba(255,255,255,0.02)",
@@ -49,7 +72,9 @@ export const clerkAppearance = {
         socialButtonsBlockButtonText: { color: "#F8FAFC", fontWeight: 600 },
         dividerLine: { background: "rgba(255,255,255,0.08)" },
         dividerText: { color: "#64748b" },
-        formFieldLabel: { color: "#94A3B8", fontWeight: 600 },
+        formFieldLabel: { display: "none" },
+        formFieldLabelRow: { display: "none" },
+        formFieldHintText: { display: "none" },
         formFieldInput: {
             background: "rgba(15, 18, 26, 0.8)",
             border: "1px solid rgba(255,255,255,0.08)",

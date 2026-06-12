@@ -71,13 +71,26 @@ https://pothole-riya.vercel.app/map
 
 ---
 
-## Step 5 — Enable Google
+## Step 5 — Sign-up form fields (optional)
+
+**Configure → User & authentication → Personal information**:
+
+| Field | Setting |
+|-------|---------|
+| **First name** | Required |
+| **Last name** | Optional |
+
+The app hides field headings and uses placeholders only (`First name *`, `Last name (optional)`, etc.). Last name must be optional in Clerk for users to skip it.
+
+---
+
+## Step 6 — Enable Google
 
 **Configure → SSO connections** → **Google** → Enable
 
 ---
 
-## Step 6 — Vercel environment variables
+## Step 7 — Vercel environment variables
 
 Vercel → Project → **Settings** → **Environment Variables**:
 
@@ -93,7 +106,7 @@ Use **REACT_APP_** prefix only (not `VITE_`).
 
 ---
 
-## Step 7 — Enable Google + test
+## Step 8 — Enable Google + test
 
 1. Open `https://pothole-riya.vercel.app/login`
 2. You should see Clerk sign-in with **Continue with Google**

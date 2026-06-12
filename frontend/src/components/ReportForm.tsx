@@ -1,7 +1,7 @@
-import React, { useState, useContext, ChangeEvent, FormEvent, useEffect, useRef } from "react";
+import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { reportIssue } from "../services/api";
-import { AuthContext } from "../App";
-import { issueIcon } from "../utils/helpers";
+import { ReportSubmitResult } from "../types";
 import exifr from 'exifr';
 import L from "leaflet";
 import { MAP_TILE_OPTIONS, MAP_TILE_URL } from "../config/map";
@@ -11,7 +11,7 @@ interface ReportFormProps {
 }
 
 export default function ReportForm({ onSuccess }: ReportFormProps) {
-    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [description, setDescription] = useState("");
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -20,7 +20,6 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gmapsLink, setGmapsLink] = useState("");
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState<any>(null);
     const [dragOver, setDragOver] = useState(false);
 
     const mapRef = useRef<HTMLDivElement>(null);
@@ -154,7 +153,6 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
 
         setLoading(true);
         setError("");
-        setSuccess(null);
         try {
             const formData = new FormData();
             formData.append("description", description);
@@ -163,13 +161,14 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
             if (image) formData.append("image", image);
 
             const res = await reportIssue(formData);
-            setSuccess(res.data);
-            setDescription("");
-            setImage(null);
-            setImagePreview(null);
-            setCoords(null);
-            setGmapsLink("");
-            if (onSuccess) onSuccess(res.data);
+            const payload: ReportSubmitResult = {
+                ...res.data,
+                description: description.trim(),
+                latitude: coords.lat,
+                longitude: coords.lng,
+            };
+            if (onSuccess) onSuccess(payload);
+            navigate("/report/success", { state: payload, replace: true });
         } catch (err: any) {
             setError(err.response?.data?.detail || "Failed to submit report.");
         } finally {
@@ -179,24 +178,6 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
 
     return (
         <>
-            {success && (
-                <div className="alert alert-success">
-                    Issue {success.status === "created" ? "created" : "added to a nearby existing report"}!
-                    <br />
-                    Type: <strong>{issueIcon(success.type)} {success.type}</strong>
-                    {success.classification_source && (
-                        <><br /><span className="form-hint">
-                            Classified by {success.classification_source === "groq" ? "Groq AI" : "keyword matching"}
-                            {success.classification_source === "keywords" && " (add GROQ_API_KEY on Render for smarter detection)"}
-                        </span></>
-                    )}
-                    {success.address && <><br />Location: <em>{success.address}</em></>}
-                    {success.status === "attached" && (
-                        <><br /><span className="form-hint">Same spot as another report within 10m — your description was saved.</span></>
-                    )}
-                </div>
-            )}
-
             {error && <div className="alert alert-error">{error}</div>}
 
             <form onSubmit={handleSubmit} className="report-form">

@@ -78,9 +78,6 @@ function LegacyLoginForm() {
         <div className="auth-card">
             <div className="auth-brand">📍 CivicWatch</div>
             <h2>Welcome Back</h2>
-            <p className="form-hint" style={{ textAlign: "center", marginBottom: "8px" }}>
-                Copy <code>frontend/.env.example</code> to <code>.env.local</code> and add your Clerk publishable key.
-            </p>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={handleSubmit}>
                 <div className="form-group">

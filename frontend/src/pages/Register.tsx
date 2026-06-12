@@ -60,7 +60,7 @@ export default function Register() {
                     <div className="graphic-content">
                         <span className="graphic-icon">📍</span>
                         <h1>CivicWatch</h1>
-                        <p>Create your account with Google. Clerk supports two-factor verification for Gmail sign-in.</p>
+                        <p>Create your account with Google or email. Start reporting civic issues in your city.</p>
                     </div>
                 </div>
                 <div className="auth-form-wrapper">
@@ -74,16 +74,37 @@ export default function Register() {
                             {error && <div className="alert alert-error">{error}</div>}
                             <form onSubmit={handleSubmit}>
                                 <div className="form-group">
-                                    <label className="form-label">Name</label>
-                                    <input className="form-input" value={name} onChange={(e) => setName(e.target.value)} required />
+                                    <input
+                                        className="form-input"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="Full name *"
+                                        required
+                                        aria-label="Full name"
+                                    />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Email</label>
-                                    <input className="form-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                    <input
+                                        className="form-input"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Email address *"
+                                        required
+                                        aria-label="Email address"
+                                    />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Password</label>
-                                    <input className="form-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                                    <input
+                                        className="form-input"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Create a password *"
+                                        required
+                                        minLength={6}
+                                        aria-label="Password"
+                                    />
                                 </div>
                                 <button type="submit" className="btn-primary btn-full" disabled={loading}>
                                     {loading ? "Creating…" : "Create Account"}
