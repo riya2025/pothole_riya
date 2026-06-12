@@ -36,15 +36,21 @@ export default function Navbar() {
 
     const closeMenu = () => setIsMenuOpen(false);
 
-    const navLink = (to: string, label: string) => (
-        <Link
-            to={to}
-            className={`nav-link ${location.pathname === to ? "active" : ""}`}
-            onClick={closeMenu}
-        >
-            {label}
-        </Link>
-    );
+    const navLink = (to: string, label: string) => {
+        const [path] = to.split("?");
+        const isActive = location.pathname === path && (
+            !to.includes("?") || location.search === to.slice(to.indexOf("?"))
+        );
+        return (
+            <Link
+                to={to}
+                className={`nav-link ${isActive ? "active" : ""}`}
+                onClick={closeMenu}
+            >
+                {label}
+            </Link>
+        );
+    };
 
     return (
         <nav className="navbar">
@@ -63,7 +69,7 @@ export default function Navbar() {
                 {user && (
                     <>
                         {navLink("/map", "Nearby Map")}
-                        {navLink("/dashboard", "Report Issue")}
+                        {navLink("/map?report=1", "Report Issue")}
                         {navLink("/my-reports", "My Reports")}
                     </>
                 )}
@@ -104,7 +110,7 @@ export default function Navbar() {
                         {user && (
                             <>
                                 {navLink("/map", "Nearby Map")}
-                                {navLink("/dashboard", "Report Issue")}
+                                {navLink("/map?report=1", "Report Issue")}
                                 {navLink("/my-reports", "My Reports")}
                             </>
                         )}

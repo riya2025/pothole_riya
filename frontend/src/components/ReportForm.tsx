@@ -8,9 +8,17 @@ import { MAP_TILE_OPTIONS, MAP_TILE_URL } from "../config/map";
 
 interface ReportFormProps {
     onSuccess?: (data: any) => void;
+    variant?: "page" | "modal";
+    initialCoords?: { lat: number; lng: number };
+    skipAutoGps?: boolean;
 }
 
-export default function ReportForm({ onSuccess }: ReportFormProps) {
+export default function ReportForm({
+    onSuccess,
+    variant = "page",
+    initialCoords,
+    skipAutoGps = false,
+}: ReportFormProps) {
     const navigate = useNavigate();
     const [description, setDescription] = useState("");
     const [image, setImage] = useState<File | null>(null);
@@ -76,8 +84,14 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
     }, [coords]);
 
     useEffect(() => {
-        getLocation();
-    }, []);
+        if (initialCoords) {
+            setCoords(initialCoords);
+            return;
+        }
+        if (!skipAutoGps) {
+            getLocation();
+        }
+    }, [initialCoords, skipAutoGps]);
 
     const parseGmapsLink = (url: string) => {
         setGmapsLink(url);
@@ -180,7 +194,7 @@ export default function ReportForm({ onSuccess }: ReportFormProps) {
         <>
             {error && <div className="alert alert-error">{error}</div>}
 
-            <form onSubmit={handleSubmit} className="report-form">
+            <form onSubmit={handleSubmit} className={`report-form ${variant === "modal" ? "report-form-modal" : ""}`}>
                 <div className="form-group">
                     <label className="form-label">Upload Image</label>
                     <div

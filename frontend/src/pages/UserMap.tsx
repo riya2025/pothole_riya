@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../App";
 import { isClerkEnabled } from "../config/clerk";
 import { useClerkSession } from "../hooks/useClerkSession";
 import MapView from "../components/MapView";
 import IssueDetailModal from "../components/IssueDetailModal";
+import ReportIssueModal from "../components/ReportIssueModal";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor, filterWithinRadius, haversineM } from "../utils/helpers";
 import { Issue } from "../types";
@@ -21,6 +22,7 @@ function UserMapContent({
 }) {
     const { user, clerkSyncing } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,6 +31,23 @@ function UserMapContent({
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [geoError, setGeoError] = useState("");
+    const [reportOpen, setReportOpen] = useState(searchParams.get("report") === "1");
+
+    const openReport = useCallback(() => {
+        setReportOpen(true);
+        setSearchParams({ report: "1" }, { replace: true });
+    }, [setSearchParams]);
+
+    const closeReport = useCallback(() => {
+        setReportOpen(false);
+        if (searchParams.get("report")) {
+            setSearchParams({}, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
+
+    useEffect(() => {
+        setReportOpen(searchParams.get("report") === "1");
+    }, [searchParams]);
 
     useEffect(() => {
         if (!isClerkEnabled) {
@@ -130,7 +149,12 @@ function UserMapContent({
                         </p>
                         {geoError && <div className="alert alert-error" style={{ marginTop: "12px" }}>{geoError}</div>}
                     </div>
-                    <div className="user-map-badge">{nearbyIssues.length} nearby</div>
+                    <div className="user-map-header-actions">
+                        <div className="user-map-badge">{nearbyIssues.length} nearby</div>
+                        <button type="button" className="btn-primary user-map-report-btn" onClick={openReport}>
+                            Report Issue
+                        </button>
+                    </div>
                 </div>
 
                 <div className="user-map-issue-list">
@@ -169,6 +193,22 @@ function UserMapContent({
                     )}
                 </div>
             </div>
+
+            <button
+                type="button"
+                className="report-fab"
+                onClick={openReport}
+                aria-label="Report an issue"
+            >
+                <span className="report-fab-icon">+</span>
+                <span className="report-fab-label">Report</span>
+            </button>
+
+            <ReportIssueModal
+                open={reportOpen}
+                onClose={closeReport}
+                initialCoords={userPos ? { lat: userPos[0], lng: userPos[1] } : null}
+            />
 
             <IssueDetailModal issueId={detailId} onClose={() => setDetailId(null)} />
         </div>
