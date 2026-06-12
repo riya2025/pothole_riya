@@ -5,7 +5,7 @@ const TIPS = [
     { title: "Snap a clear photo", desc: "Include the full pothole or issue in frame. GPS from your photo auto-fills location." },
     { title: "Describe the problem", desc: "Mention severity — e.g. 'deep pothole blocking left lane' helps prioritization." },
     { title: "Pin the exact spot", desc: "Drag the map marker or paste a Google Maps link for precision." },
-    { title: "AI classifies it", desc: "Our model detects potholes, garbage, and streetlight issues automatically." },
+    { title: "AI classifies it", desc: "Groq vision reads your photo to detect potholes, garbage, and streetlight issues." },
 ];
 
 export default function Dashboard() {

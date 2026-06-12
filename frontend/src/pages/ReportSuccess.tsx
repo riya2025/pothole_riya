@@ -75,18 +75,6 @@ export default function ReportSuccess() {
                             <span>{result.address}</span>
                         </div>
                     )}
-                    {result.classification_source && (
-                        <div className="report-success-row">
-                            <span className="report-success-label">Classified by</span>
-                            <span>
-                                {result.classification_source === "groq" ? "Groq AI" : "Keyword matching"}
-                            </span>
-                        </div>
-                    )}
-                    <div className="report-success-row">
-                        <span className="report-success-label">Issue ID</span>
-                        <span>#{result.issue_id}</span>
-                    </div>
                 </div>
 
                 <div className="report-success-actions">

@@ -23,7 +23,7 @@ class IssueReportResponse(BaseModel):
     status: str   # "created" | "attached"
     address: Optional[str] = None
     type: str
-    classification_source: Optional[str] = None  # "groq" | "keywords"
+    classification_source: Optional[str] = None  # "groq_vision" | "groq" | "keywords"
 
 
 class ReportOut(BaseModel):

@@ -27,8 +27,12 @@ async def handle_report(
     db = sessions[city]()
 
     try:
-        # 2. Classify via Groq (or keyword fallback)
-        issue_type, classification_source = await classify_issue(description)
+        # 2. Classify via Groq vision (photo) or text, then keyword fallback
+        issue_type, classification_source = await classify_issue(
+            description,
+            image_bytes=image_bytes,
+            image_filename=image_filename,
+        )
 
         # 3. Reverse geocode
         address = await reverse_geocode(lat, lng)

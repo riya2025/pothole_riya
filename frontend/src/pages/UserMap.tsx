@@ -6,13 +6,8 @@ import { useClerkSession } from "../hooks/useClerkSession";
 import MapView from "../components/MapView";
 import IssueDetailModal from "../components/IssueDetailModal";
 import { getAllIssues } from "../services/api";
-import FilterSelect from "../components/FilterSelect";
-import MapLegend from "../components/MapLegend";
-import { issueIcon, issueColor, filterWithinRadius, haversineM, normalizeIssueType } from "../utils/helpers";
-import { ISSUE_TYPES } from "../config/filters";
+import { issueIcon, issueColor, filterWithinRadius, haversineM } from "../utils/helpers";
 import { Issue } from "../types";
-
-const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
 const RADIUS_M = 20;
 const MAP_ZOOM = 18;
@@ -31,7 +26,6 @@ function UserMapContent({
     const [loading, setLoading] = useState(true);
     const [locating, setLocating] = useState(true);
     const [userPos, setUserPos] = useState<[number, number] | null>(null);
-    const [typeFilter, setTypeFilter] = useState("all");
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [geoError, setGeoError] = useState("");
@@ -75,12 +69,8 @@ function UserMapContent({
 
     const nearbyIssues = useMemo(() => {
         if (!userPos) return [];
-        let result = filterWithinRadius(issues, userPos[0], userPos[1], RADIUS_M);
-        if (typeFilter !== "all") {
-            result = result.filter((i) => normalizeIssueType(i.type) === typeFilter);
-        }
-        return result;
-    }, [issues, userPos, typeFilter]);
+        return filterWithinRadius(issues, userPos[0], userPos[1], RADIUS_M);
+    }, [issues, userPos]);
 
     if (isClerkEnabled && !user && clerkSyncing) {
         return (
@@ -111,29 +101,20 @@ function UserMapContent({
                         <p>{locating ? "Getting your location…" : "Loading issues…"}</p>
                     </div>
                 ) : userPos ? (
-                    <>
-                        <MapView
-                            issues={nearbyIssues}
-                            mapCenter={userPos}
-                            mapZoom={MAP_ZOOM}
-                            autoFitBounds
-                            fallbackCenter={userPos}
-                            fallbackZoom={MAP_ZOOM}
-                            maxFitZoom={MAP_ZOOM}
-                            selectedId={selectedId}
-                            showRadius={RADIUS_M}
-                            userPosition={userPos}
-                            onMarkerClick={(issue) => setSelectedId(issue.id)}
-                            onViewDetails={(issue) => setDetailId(issue.id)}
-                        />
-                        <MapLegend
-                            activeType={typeFilter}
-                            onTypeSelect={(t) => {
-                                setTypeFilter((p) => (p === t ? "all" : t));
-                                setSelectedId(null);
-                            }}
-                        />
-                    </>
+                    <MapView
+                        issues={nearbyIssues}
+                        mapCenter={userPos}
+                        mapZoom={MAP_ZOOM}
+                        autoFitBounds
+                        fallbackCenter={userPos}
+                        fallbackZoom={MAP_ZOOM}
+                        maxFitZoom={MAP_ZOOM}
+                        selectedId={selectedId}
+                        showRadius={RADIUS_M}
+                        userPosition={userPos}
+                        onMarkerClick={(issue) => setSelectedId(issue.id)}
+                        onViewDetails={(issue) => setDetailId(issue.id)}
+                    />
                 ) : null}
             </div>
 
@@ -150,21 +131,6 @@ function UserMapContent({
                         {geoError && <div className="alert alert-error" style={{ marginTop: "12px" }}>{geoError}</div>}
                     </div>
                     <div className="user-map-badge">{nearbyIssues.length} nearby</div>
-                </div>
-
-                <div className="filter-toolbar user-map-toolbar">
-                    <FilterSelect
-                        label="Issue Type"
-                        value={typeFilter}
-                        onChange={(v) => {
-                            setTypeFilter(v);
-                            setSelectedId(null);
-                        }}
-                        options={typeOptions}
-                    />
-                    <div className="filter-result-badge">
-                        {nearbyIssues.length} within {RADIUS_M}m
-                    </div>
                 </div>
 
                 <div className="user-map-issue-list">
