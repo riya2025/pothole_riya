@@ -151,9 +151,6 @@ function UserMapContent({
                     </div>
                     <div className="user-map-header-actions">
                         <div className="user-map-badge">{nearbyIssues.length} nearby</div>
-                        <button type="button" className="btn-primary user-map-report-btn" onClick={openReport}>
-                            Report Issue
-                        </button>
                     </div>
                 </div>
 

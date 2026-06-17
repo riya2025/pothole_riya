@@ -1228,12 +1228,6 @@ a:hover {
   white-space: nowrap;
 }
 
-.user-map-report-btn {
-  white-space: nowrap;
-  padding: 10px 18px;
-  font-size: 14px;
-}
-
 /* Floating report button — mobile only */
 .report-fab {
   position: fixed;
@@ -3104,10 +3098,6 @@ a:hover {
     align-items: center;
   }
 
-  .user-map-report-btn {
-    display: none;
-  }
-
   .report-fab {
     display: inline-flex;
     bottom: 16px;
@@ -3138,6 +3128,7 @@ a:hover {
   .user-map-issue-list {
     grid-template-columns: 1fr;
     padding: 16px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 
 @keyframes reportSheetUp {
