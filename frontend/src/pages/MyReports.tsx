@@ -52,16 +52,19 @@ export default function MyReports() {
                         return (
                             <div key={issue.report_id || issue.id} className="issue-row">
                                 <div className="issue-row-header">
-                                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                        <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
-                                            {issueIcon(issue.type)} {issue.type}
-                                        </span>
-                                        <span className="issue-address">📍 {issue.address || "Location Tracking..."}</span>
-                                    </div>
+                                    <span className="issue-type-badge" style={{ background: `${color}22`, color }}>
+                                        {issueIcon(issue.type)} {issue.type}
+                                    </span>
                                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                         {formatDate(issue.created_at)}
                                     </span>
                                 </div>
+                                <span
+                                    className="issue-address issue-address-clamp"
+                                    title={issue.address || "Location Tracking..."}
+                                >
+                                    📍 {issue.address || "Location Tracking..."}
+                                </span>
                                 <div className="issue-progress-container">
                                     <div className="progress-track">
                                         <div className="progress-fill" style={{ width: `${progress}%` }} />

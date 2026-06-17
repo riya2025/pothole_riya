@@ -14,6 +14,32 @@ import { Issue } from "../types";
 const cityOptions = CITIES.map((c) => ({ value: c.value, label: c.label }));
 const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
+// City / state / district tokens that aren't useful as a neighbourhood filter.
+const AREA_STOPWORDS = new Set([
+    "india",
+    "hyderabad",
+    "bangalore",
+    "bengaluru",
+    "vijayawada",
+    "telangana",
+    "andhra pradesh",
+    "karnataka",
+    "ntr",
+]);
+
+/** Pull neighbourhood-level segments out of a full address string. */
+function extractAreas(address?: string): string[] {
+    if (!address) return [];
+    return address
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .filter((s) => s.length > 2)
+        .filter((s) => !/^\d[\d\s-]*$/.test(s)) // pincodes / numeric segments
+        .filter((s) => !/\((urban|rural)\)/i.test(s))
+        .filter((s) => !AREA_STOPWORDS.has(s.toLowerCase()));
+}
+
 export default function AdminIssues() {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -26,6 +52,7 @@ export default function AdminIssues() {
     const [loading, setLoading] = useState(true);
     const [typeFilter, setTypeFilter] = useState("all");
     const [cityFilter, setCityFilter] = useState<CityValue>("all");
+    const [areaFilter, setAreaFilter] = useState("all");
     const [search, setSearch] = useState("");
     const [detailId, setDetailId] = useState<number | null>(null);
 
@@ -36,10 +63,35 @@ export default function AdminIssues() {
             .finally(() => setLoading(false));
     }, []);
 
+    // Reset the area filter whenever the city changes (areas are city-specific).
+    useEffect(() => {
+        setAreaFilter("all");
+    }, [cityFilter]);
+
+    const cityIssues = useMemo(() => {
+        if (cityFilter === "all") return issues;
+        return issues.filter((i) => (i.city || "").toLowerCase() === cityFilter);
+    }, [issues, cityFilter]);
+
+    const areaOptions = useMemo(() => {
+        const seen = new Map<string, string>();
+        cityIssues.forEach((i) => {
+            extractAreas(i.address).forEach((area) => {
+                const key = area.toLowerCase();
+                if (!seen.has(key)) seen.set(key, area);
+            });
+        });
+        const sorted = Array.from(seen.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+        return [
+            { value: "all", label: "All Areas" },
+            ...sorted.map(([key, label]) => ({ value: key, label })),
+        ];
+    }, [cityIssues]);
+
     const filtered = useMemo(() => {
-        let result = issues;
-        if (cityFilter !== "all") {
-            result = result.filter((i) => (i.city || "").toLowerCase() === cityFilter);
+        let result = cityIssues;
+        if (areaFilter !== "all") {
+            result = result.filter((i) => (i.address || "").toLowerCase().includes(areaFilter));
         }
         if (typeFilter !== "all") {
             result = result.filter((i) => normalizeIssueType(i.type) === typeFilter);
@@ -54,7 +106,7 @@ export default function AdminIssues() {
             );
         }
         return result;
-    }, [issues, cityFilter, typeFilter, search]);
+    }, [cityIssues, areaFilter, typeFilter, search]);
 
     return (
         <div className="dashboard-page">
@@ -78,6 +130,12 @@ export default function AdminIssues() {
 
             <div className="filter-toolbar admin-filter-toolbar">
                 <FilterSelect label="City" value={cityFilter} onChange={(v) => setCityFilter(v as CityValue)} options={cityOptions} />
+                <FilterSelect
+                    label="Area"
+                    value={areaFilter}
+                    onChange={setAreaFilter}
+                    options={areaOptions}
+                />
                 <FilterSelect label="Issue Type" value={typeFilter} onChange={setTypeFilter} options={typeOptions} />
                 <div className="filter-search-group">
                     <label className="filter-select-label" htmlFor="admin-search">Search</label>

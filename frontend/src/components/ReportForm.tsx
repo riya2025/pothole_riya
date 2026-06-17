@@ -26,7 +26,6 @@ export default function ReportForm({
     const [loading, setLoading] = useState(false);
     const [locating, setLocating] = useState(false);
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-    const [gmapsLink, setGmapsLink] = useState("");
     const [error, setError] = useState("");
     const [dragOver, setDragOver] = useState(false);
     const [locStatus, setLocStatus] = useState<{ type: "info" | "success" | "warn"; text: string } | null>(null);
@@ -95,25 +94,6 @@ export default function ReportForm({
             getLocation();
         }
     }, [initialCoords, skipAutoGps]);
-
-    const parseGmapsLink = (url: string) => {
-        setGmapsLink(url);
-        const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-        const match = url.match(regex);
-        if (match) {
-            setCoords({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
-            setError("");
-            setLocStatus({ type: "info", text: "Location set from the Google Maps link." });
-        } else {
-            const qRegex = /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/;
-            const qMatch = url.match(qRegex);
-            if (qMatch) {
-                setCoords({ lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) });
-                setError("");
-                setLocStatus({ type: "info", text: "Location set from the Google Maps link." });
-            }
-        }
-    };
 
     const processImage = async (file: File) => {
         setImage(file);
@@ -241,18 +221,6 @@ export default function ReportForm({
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Describe the issue (e.g. large pothole blocking the road)"
                     />
-                </div>
-
-                <div className="form-group">
-                    <label className="form-label">Google Maps Link (Optional)</label>
-                    <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Paste Google Maps URL here…"
-                        value={gmapsLink}
-                        onChange={(e) => parseGmapsLink(e.target.value)}
-                    />
-                    <span className="form-hint">Pasting a link will automatically move the map marker.</span>
                 </div>
 
                 <div className="form-group">

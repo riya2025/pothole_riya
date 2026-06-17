@@ -2527,6 +2527,17 @@ a:hover {
   font-weight: 500;
 }
 
+/* Keep long addresses tidy on the My Reports cards (max 2 lines + ellipsis) */
+.issue-address-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
 .issue-meta {
   display: flex;
   justify-content: space-between;
