@@ -22,7 +22,7 @@ def get_user_issues(
     all_reports = []
     seen_issues = set()
     
-    for city in ["hyderabad", "bangalore", "users"]:
+    for city in ["hyderabad", "bangalore", "vijayawada", "users"]:
         if city not in sessions: continue
         db = sessions[city]()
         try:

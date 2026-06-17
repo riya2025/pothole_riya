@@ -10,6 +10,9 @@ def get_city_from_coords(lat: float, lng: float) -> str:
     # Bangalore bounds approximately
     if 12.5 <= lat <= 13.5 and 77.0 <= lng <= 78.0:
         return "bangalore"
+    # Vijayawada bounds approximately
+    if 16.3 <= lat <= 16.7 and 80.4 <= lng <= 80.9:
+        return "vijayawada"
     # Default to Hyderabad
     return "hyderabad"
 

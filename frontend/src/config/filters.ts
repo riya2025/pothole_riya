@@ -2,6 +2,7 @@ export const CITIES = [
     { value: "all", label: "All Cities" },
     { value: "hyderabad", label: "Hyderabad" },
     { value: "bangalore", label: "Bangalore" },
+    { value: "vijayawada", label: "Vijayawada" },
 ] as const;
 
 export type CityValue = (typeof CITIES)[number]["value"];
@@ -10,6 +11,7 @@ export const CITY_CENTERS: Record<string, [number, number]> = {
     all: [15.0, 78.0],
     hyderabad: [17.385, 78.4867],
     bangalore: [12.9716, 77.5946],
+    vijayawada: [16.5062, 80.648],
 };
 
 /** Default zoom when a filter has no matching markers */
@@ -17,6 +19,7 @@ export const CITY_ZOOM: Record<string, number> = {
     all: 7,
     hyderabad: 11,
     bangalore: 11,
+    vijayawada: 11,
 };
 
 export const ISSUE_TYPES = [
@@ -29,9 +32,9 @@ export const ISSUE_TYPES = [
 
 export type IssueTypeValue = (typeof ISSUE_TYPES)[number]["value"];
 
-const DETECTABLE_CITIES = ["hyderabad", "bangalore"] as const;
+const DETECTABLE_CITIES = ["hyderabad", "bangalore", "vijayawada"] as const;
 
-/** Pick Hyderabad or Bangalore from GPS; returns "all" if too far from both. */
+/** Pick the nearest supported city from GPS; returns "all" if too far from all. */
 export function detectNearestCity(
     lat: number,
     lng: number,

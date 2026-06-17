@@ -21,6 +21,7 @@ DATABASE_URLS = {
     "users": raw_postgres_url or "sqlite:///./users.db",
     "hyderabad": raw_postgres_url or "sqlite:///./hyderabad.db",
     "bangalore": raw_postgres_url or "sqlite:///./bangalore.db",
+    "vijayawada": raw_postgres_url or "sqlite:///./vijayawada.db",
 }
 
 # Connection arguments
@@ -62,6 +63,14 @@ def get_db_hyderabad():
 
 def get_db_bangalore():
     db = sessions["bangalore"]()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_db_vijayawada():
+    db = sessions["vijayawada"]()
     try:
         yield db
     finally:

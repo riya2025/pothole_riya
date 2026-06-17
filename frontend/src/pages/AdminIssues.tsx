@@ -61,7 +61,7 @@ export default function AdminIssues() {
             <section className="admin-hero">
                 <div className="admin-hero-text">
                     <h1>All Reported Issues</h1>
-                    <p>Browse civic issues reported across Hyderabad and Bangalore.</p>
+                    <p>Browse civic issues reported across Hyderabad, Bangalore and Vijayawada.</p>
                 </div>
                 <HeroVisualGallery
                     compact

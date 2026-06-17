@@ -90,7 +90,7 @@ export default function Home() {
                             Fix your city.
                         </h1>
                         <p>
-                            CivicWatch maps potholes, broken streetlights, and garbage across Hyderabad & Bangalore.
+                            CivicWatch maps potholes, broken streetlights, and garbage across Hyderabad, Bangalore & Vijayawada.
                             Join citizens making roads safer — one report at a time.
                         </p>
                         <div className="hero-actions">
