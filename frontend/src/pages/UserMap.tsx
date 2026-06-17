@@ -114,14 +114,24 @@ function UserMapContent({
         // was cold-starting). Surface a retry instead of a blank screen.
         if (isClerkEnabled && isSignedIn) {
             return (
-                <div className="loading-center" style={{ minHeight: "60vh", textAlign: "center", padding: "0 20px" }}>
-                    <p style={{ color: "#94A3B8", maxWidth: 440, marginBottom: 16 }}>
-                        We couldn't reach the server to finish signing you in. The backend may be
-                        waking up — please try again in a few seconds.
-                    </p>
-                    <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
-                        Try again
-                    </button>
+                <div className="server-retry">
+                    <div className="server-retry-card">
+                        <div className="server-retry-icon">
+                            <div className="spinner" />
+                        </div>
+                        <h2 className="server-retry-title">Waking up the server…</h2>
+                        <p className="server-retry-text">
+                            We couldn't reach the server to finish signing you in. The backend may be
+                            spinning up after a short rest — this usually takes a few seconds.
+                        </p>
+                        <button
+                            type="button"
+                            className="btn-primary server-retry-btn"
+                            onClick={() => window.location.reload()}
+                        >
+                            Try again
+                        </button>
+                    </div>
                 </div>
             );
         }
