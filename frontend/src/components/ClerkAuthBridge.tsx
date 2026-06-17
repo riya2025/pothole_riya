@@ -64,7 +64,26 @@ export default function ClerkAuthBridge() {
             || location.pathname.startsWith("/register/");
 
         setClerkSyncing(true);
-        clerkSync(name, email, clerkUser.id)
+
+        // The backend (Render free tier) can be cold-starting, so retry a few
+        // times with a short backoff before giving up.
+        const syncWithRetry = async () => {
+            const maxAttempts = 4;
+            let lastErr: unknown;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    return await clerkSync(name, email, clerkUser.id);
+                } catch (err) {
+                    lastErr = err;
+                    if (attempt < maxAttempts) {
+                        await new Promise((resolve) => setTimeout(resolve, attempt * 2500));
+                    }
+                }
+            }
+            throw lastErr;
+        };
+
+        syncWithRetry()
             .then((res) => {
                 const token = res.data.access_token;
                 const payload = parseJwt(token);

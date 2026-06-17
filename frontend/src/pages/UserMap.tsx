@@ -109,7 +109,24 @@ function UserMapContent({
         );
     }
 
-    if (!user) return null;
+    if (!user) {
+        // Signed in with Clerk, but the backend session sync failed (e.g. server
+        // was cold-starting). Surface a retry instead of a blank screen.
+        if (isClerkEnabled && isSignedIn) {
+            return (
+                <div className="loading-center" style={{ minHeight: "60vh", textAlign: "center", padding: "0 20px" }}>
+                    <p style={{ color: "#94A3B8", maxWidth: 440, marginBottom: 16 }}>
+                        We couldn't reach the server to finish signing you in. The backend may be
+                        waking up — please try again in a few seconds.
+                    </p>
+                    <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+                        Try again
+                    </button>
+                </div>
+            );
+        }
+        return null;
+    }
 
     return (
         <div className="home-page user-map-page">

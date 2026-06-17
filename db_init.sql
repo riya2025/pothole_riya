@@ -4,9 +4,6 @@
 -- (create the database first: CREATE DATABASE civic_db;)
 -- ============================================================
 
--- Enable PostGIS
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 -- ============================================================
 -- Users Table
 -- ============================================================
@@ -25,14 +22,15 @@ CREATE TABLE IF NOT EXISTS issues (
     id          SERIAL PRIMARY KEY,
     type        VARCHAR(50) NOT NULL DEFAULT 'other',   -- pothole | garbage | streetlight | other
     status      VARCHAR(30) NOT NULL DEFAULT 'active',  -- active | resolved
-    location    GEOGRAPHY(POINT, 4326),                 -- PostGIS geographic point
+    latitude    DOUBLE PRECISION,
+    longitude   DOUBLE PRECISION,
     address     TEXT,
     report_count INTEGER NOT NULL DEFAULT 1,
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_issues_location ON issues USING GIST (location);
+CREATE INDEX IF NOT EXISTS idx_issues_lat_lng ON issues (latitude, longitude);
 
 -- ============================================================
 -- Reports Table  (one report per user submission)
@@ -68,14 +66,28 @@ CREATE TRIGGER trg_issues_updated_at
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================
--- Seed Data (optional – a few sample issues in Hyderabad)
+-- Seed Data (optional – sample issues at real localities)
 -- ============================================================
 INSERT INTO users (name, email, hashed_password) VALUES
     ('Demo User', 'demo@civic.app', '$2b$12$demohashedpassword00000000000000000000000000000000000')
 ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO issues (type, status, location, address, report_count) VALUES
-    ('pothole',     'active', ST_GeographyFromText('POINT(78.4867 17.3850)'), 'Banjara Hills, Hyderabad', 3),
-    ('garbage',     'active', ST_GeographyFromText('POINT(78.4744 17.3660)'), 'Jubilee Hills, Hyderabad', 1),
-    ('streetlight', 'active', ST_GeographyFromText('POINT(78.5000 17.4000)'), 'Secunderabad, Hyderabad',  2)
+INSERT INTO issues (type, status, latitude, longitude, address, report_count) VALUES
+    -- Hyderabad, Telangana
+    ('pothole',     'active', 17.4156, 78.4376, 'Road No. 12, Banjara Hills, Hyderabad, Telangana 500034', 3),
+    ('garbage',     'active', 17.4313, 78.4070, 'Jubilee Hills Checkpost, Jubilee Hills, Hyderabad, Telangana 500033', 1),
+    ('streetlight', 'active', 17.4483, 78.3818, 'Hitech City Road, Madhapur, Hyderabad, Telangana 500081', 2),
+    ('pothole',     'active', 17.4401, 78.3489, 'Gachibowli, Hyderabad, Telangana 500032', 1),
+
+    -- Bengaluru, Karnataka
+    ('pothole',     'active', 12.9756, 77.6094, 'MG Road, Bengaluru, Karnataka 560001', 4),
+    ('garbage',     'active', 12.9352, 77.6245, '80 Feet Road, Koramangala, Bengaluru, Karnataka 560034', 2),
+    ('streetlight', 'active', 12.9719, 77.6408, '100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038', 1),
+    ('pothole',     'active', 12.9698, 77.7500, 'Whitefield Main Road, Whitefield, Bengaluru, Karnataka 560066', 2),
+
+    -- Vijayawada, Andhra Pradesh
+    ('pothole',     'active', 16.4986, 80.6480, 'Benz Circle, M.G. Road, Vijayawada, Andhra Pradesh 520010', 3),
+    ('garbage',     'active', 16.5108, 80.6236, 'Governorpet, Vijayawada, Andhra Pradesh 520002', 1),
+    ('streetlight', 'active', 16.4893, 80.6701, 'Patamata, Vijayawada, Andhra Pradesh 520010', 2),
+    ('pothole',     'active', 16.4715, 80.6790, 'Auto Nagar, Vijayawada, Andhra Pradesh 520007', 1)
 ON CONFLICT DO NOTHING;

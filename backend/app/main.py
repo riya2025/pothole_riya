@@ -26,6 +26,8 @@ app.add_middleware(
         "https://pothole-riya.vercel.app",
         "https://civic-issue-api-612t.onrender.com"
     ],
+    # Allow Vercel preview/branch deployments (e.g. pothole-riya-git-*.vercel.app)
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
