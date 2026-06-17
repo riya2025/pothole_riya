@@ -29,6 +29,7 @@ export default function ReportForm({
     const [gmapsLink, setGmapsLink] = useState("");
     const [error, setError] = useState("");
     const [dragOver, setDragOver] = useState(false);
+    const [locStatus, setLocStatus] = useState<{ type: "info" | "success" | "warn"; text: string } | null>(null);
 
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
@@ -56,12 +57,14 @@ export default function ReportForm({
             const position = marker.getLatLng();
             marker.setOpacity(1);
             setCoords({ lat: position.lat, lng: position.lng });
+            setLocStatus({ type: "info", text: "Location set manually on the map." });
         });
 
         map.on("click", (e) => {
             marker.setLatLng(e.latlng);
             marker.setOpacity(1);
             setCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
+            setLocStatus({ type: "info", text: "Location set manually on the map." });
         });
 
         mapInstanceRef.current = map;
@@ -100,12 +103,14 @@ export default function ReportForm({
         if (match) {
             setCoords({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
             setError("");
+            setLocStatus({ type: "info", text: "Location set from the Google Maps link." });
         } else {
             const qRegex = /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/;
             const qMatch = url.match(qRegex);
             if (qMatch) {
                 setCoords({ lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) });
                 setError("");
+                setLocStatus({ type: "info", text: "Location set from the Google Maps link." });
             }
         }
     };
@@ -116,13 +121,22 @@ export default function ReportForm({
 
         try {
             const gps = await exifr.gps(file);
-            if (gps?.latitude && gps?.longitude) {
-                setCoords({ lat: gps.latitude, lng: gps.longitude });
+            const lat = gps?.latitude;
+            const lng = gps?.longitude;
+            if (typeof lat === "number" && typeof lng === "number" && !Number.isNaN(lat) && !Number.isNaN(lng)) {
+                setCoords({ lat, lng });
                 setError("");
+                setLocStatus({ type: "success", text: "Location detected from photo." });
+                return;
             }
         } catch {
-            /* no EXIF — keep GPS / map pin */
+            /* fall through to the no-GPS message */
         }
+
+        setLocStatus({
+            type: "warn",
+            text: "No GPS data in this photo — use “Use My Current Location” or tap the map to set the spot.",
+        });
     };
 
     const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -147,6 +161,7 @@ export default function ReportForm({
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                setLocStatus({ type: "success", text: "Location captured from your device GPS." });
                 setLocating(false);
             },
             () => {
@@ -270,6 +285,25 @@ export default function ReportForm({
                             </a>
                         )}
                     </div>
+
+                    {locStatus && (
+                        <p
+                            className="form-hint"
+                            style={{
+                                marginTop: 8,
+                                fontWeight: 600,
+                                color:
+                                    locStatus.type === "success"
+                                        ? "#22c55e"
+                                        : locStatus.type === "warn"
+                                            ? "#f59e0b"
+                                            : "var(--text-secondary)",
+                            }}
+                        >
+                            {locStatus.type === "success" ? "📍 " : locStatus.type === "warn" ? "⚠️ " : ""}
+                            {locStatus.text}
+                        </p>
+                    )}
 
                     {coords && (
                         <p className="coords-text">
