@@ -28,7 +28,7 @@ const AREA_STOPWORDS = new Set([
 ]);
 
 /** Pull neighbourhood-level segments out of a full address string. */
-function extractAreas(address?: string): string[] {
+function extractAreas(address?: string | null): string[] {
     if (!address) return [];
     return address
         .split(",")
