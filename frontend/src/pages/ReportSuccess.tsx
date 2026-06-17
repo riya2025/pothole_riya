@@ -8,6 +8,38 @@ function buildTwitterShareUrl(text: string, url: string) {
     return `https://twitter.com/intent/tweet?${params.toString()}`;
 }
 
+const TWEET_TEMPLATES: Record<string, { emoji: string; line: string; tags: string }> = {
+    pothole: {
+        emoji: "🕳️",
+        line: "Just flagged a pothole before it claims another tyre.",
+        tags: "#FixOurRoads #CivicWatch",
+    },
+    garbage: {
+        emoji: "🗑️",
+        line: "Just reported a garbage pile-up so our streets can breathe again.",
+        tags: "#CleanCity #CivicWatch",
+    },
+    streetlight: {
+        emoji: "💡",
+        line: "Just reported a broken streetlight to keep our nights safe and bright.",
+        tags: "#SaferStreets #CivicWatch",
+    },
+    other: {
+        emoji: "📍",
+        line: "Just reported a civic issue that needed someone to speak up.",
+        tags: "#CivicWatch",
+    },
+};
+
+function buildTweetText(type: string) {
+    const t = TWEET_TEMPLATES[type] ?? TWEET_TEMPLATES.other;
+    return (
+        `${t.emoji} ${t.line}\n\n` +
+        `Spotted something broken in your city? Snap it, drop a pin, and let's fix it together. ` +
+        `Every report counts. 💪\n\n${t.tags}`
+    );
+}
+
 export default function ReportSuccess() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -21,12 +53,7 @@ export default function ReportSuccess() {
 
     const twitterUrl = useMemo(() => {
         if (!result) return "";
-        const typeLabel = result.type.charAt(0).toUpperCase() + result.type.slice(1);
-        const locationBit = result.address ? ` near ${result.address}` : "";
-        const text =
-            `I just reported a ${typeLabel.toLowerCase()} issue${locationBit} on CivicWatch. ` +
-            `Help make our city safer — report civic problems near you! #CivicWatch`;
-        return buildTwitterShareUrl(text, shareUrl);
+        return buildTwitterShareUrl(buildTweetText(result.type), shareUrl);
     }, [result, shareUrl]);
 
     const mapsUrl =
