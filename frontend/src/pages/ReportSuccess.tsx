@@ -61,6 +61,29 @@ export default function ReportSuccess() {
             ? `https://www.google.com/maps?q=${result.latitude},${result.longitude}`
             : null;
 
+    const ghmcWhatsAppUrl = useMemo(() => {
+        if (!result) return "";
+        // GHMC's official civic-complaint WhatsApp number (override via env if needed).
+        const number = process.env.REACT_APP_GHMC_WHATSAPP || "918125966586";
+        const typeLabel: Record<string, string> = {
+            pothole: "Pothole on the road",
+            garbage: "Garbage / uncleared waste",
+            streetlight: "Streetlight not working",
+            other: "Civic issue",
+        };
+        const lines = ["GHMC Civic Complaint", `Issue: ${typeLabel[result.type] || "Civic issue"}`];
+        if (result.address) lines.push(`Address: ${result.address}`);
+        if (result.latitude != null && result.longitude != null) {
+            lines.push(`Location: ${result.latitude.toFixed(5)}, ${result.longitude.toFixed(5)}`);
+            lines.push(`Map: https://www.google.com/maps?q=${result.latitude},${result.longitude}`);
+        }
+        if (result.image_url && /^https?:\/\//.test(result.image_url)) {
+            lines.push(`Photo: ${result.image_url}`);
+        }
+        lines.push("", "Reported via CivicWatch — please also attach the photo from your gallery.");
+        return `https://wa.me/${number}?text=${encodeURIComponent(lines.join("\n"))}`;
+    }, [result]);
+
     if (!result?.issue_id) {
         return (
             <div className="report-success-page">
@@ -105,6 +128,14 @@ export default function ReportSuccess() {
                 </div>
 
                 <div className="report-success-actions">
+                    <a
+                        href={ghmcWhatsAppUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-whatsapp btn-full"
+                    >
+                        Send to GHMC (WhatsApp)
+                    </a>
                     <a
                         href={twitterUrl}
                         target="_blank"

@@ -52,4 +52,5 @@ export interface ReportSubmitResult {
     description?: string;
     latitude?: number;
     longitude?: number;
+    image_url?: string | null;
 }
