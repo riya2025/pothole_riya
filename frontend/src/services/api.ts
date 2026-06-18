@@ -36,6 +36,11 @@ export const reportIssue = (formData: FormData) =>
         headers: { "Content-Type": "multipart/form-data" },
     });
 
+export const analyzeIssueImage = (formData: FormData) =>
+    API.post("/api/issues/analyze", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+
 export const getUserIssues = (userId: number) =>
     API.get(`/api/users/${userId}/issues`);
 

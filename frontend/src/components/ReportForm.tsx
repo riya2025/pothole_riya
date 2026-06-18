@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { reportIssue } from "../services/api";
+import { reportIssue, analyzeIssueImage } from "../services/api";
 import { ReportSubmitResult } from "../types";
 import exifr from 'exifr';
 import L from "leaflet";
@@ -29,6 +29,8 @@ export default function ReportForm({
     const [error, setError] = useState("");
     const [dragOver, setDragOver] = useState(false);
     const [locStatus, setLocStatus] = useState<{ type: "info" | "success" | "warn"; text: string } | null>(null);
+    const [analyzing, setAnalyzing] = useState(false);
+    const [descAutoFilled, setDescAutoFilled] = useState(false);
 
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
@@ -95,10 +97,7 @@ export default function ReportForm({
         }
     }, [initialCoords, skipAutoGps]);
 
-    const processImage = async (file: File) => {
-        setImage(file);
-        setImagePreview(URL.createObjectURL(file));
-
+    const detectGpsFromImage = async (file: File) => {
         try {
             const gps = await exifr.gps(file);
             const lat = gps?.latitude;
@@ -112,11 +111,37 @@ export default function ReportForm({
         } catch {
             /* fall through to the no-GPS message */
         }
-
         setLocStatus({
             type: "warn",
             text: "No GPS data in this photo — use “Use My Current Location” or tap the map to set the spot.",
         });
+    };
+
+    const autoDescribeImage = async (file: File) => {
+        setAnalyzing(true);
+        setDescAutoFilled(false);
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+            const res = await analyzeIssueImage(formData);
+            const suggestion = (res.data?.description || "").trim();
+            // Only fill in if the user hasn't written their own description.
+            if (suggestion && !description.trim()) {
+                setDescription(suggestion);
+                setDescAutoFilled(true);
+            }
+        } catch {
+            /* analysis is best-effort — user can still type manually */
+        } finally {
+            setAnalyzing(false);
+        }
+    };
+
+    const processImage = async (file: File) => {
+        setImage(file);
+        setImagePreview(URL.createObjectURL(file));
+        await detectGpsFromImage(file);
+        autoDescribeImage(file);
     };
 
     const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -218,9 +243,22 @@ export default function ReportForm({
                         className="form-textarea"
                         rows={3}
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={(e) => {
+                            setDescription(e.target.value);
+                            setDescAutoFilled(false);
+                        }}
                         placeholder="Describe the issue (e.g. large pothole blocking the road)"
                     />
+                    {analyzing && (
+                        <span className="form-hint" style={{ marginTop: 6, display: "block" }}>
+                            Analyzing photo to suggest a description…
+                        </span>
+                    )}
+                    {descAutoFilled && !analyzing && (
+                        <span className="form-hint" style={{ marginTop: 6, display: "block", color: "#818cf8", fontWeight: 600 }}>
+                            ✨ Auto-filled from your photo — edit if anything's off.
+                        </span>
+                    )}
                 </div>
 
                 <div className="form-group">
