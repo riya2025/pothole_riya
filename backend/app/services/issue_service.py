@@ -4,7 +4,6 @@ from app.services.geocoding import reverse_geocode
 from app.repositories import issue_repo, report_repo
 from app.database import sessions
 from app.services.storage import save_report_image
-from app.services.email_service import queue_complaint_email
 
 
 def get_city_from_coords(lat: float, lng: float) -> str:
@@ -46,20 +45,6 @@ async def handle_report(
 
         # 5. Deduplication in the selected city database
         existing = issue_repo.find_nearby_issue(db, lat, lng, radius_meters=10.0)
-
-        # 6. Auto-email GHMC the complaint with the original photo attached
-        #    (best-effort, fire-and-forget — never blocks or breaks the report).
-        report_type = existing.type if existing else issue_type
-        queue_complaint_email(
-            issue_type=report_type,
-            address=address,
-            lat=lat,
-            lng=lng,
-            description=description,
-            image_bytes=image_bytes,
-            image_filename=image_filename,
-            image_url=image_url,
-        )
 
         if existing:
             issue_repo.increment_report_count(db, existing)

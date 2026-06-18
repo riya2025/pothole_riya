@@ -14,15 +14,6 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
 
-    # Auto-email civic complaints (with the original photo attached) to GHMC.
-    # Works with any SMTP provider — e.g. Gmail (app password) or SendGrid.
-    SMTP_HOST: str = ""
-    SMTP_PORT: int = 587
-    SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
-    SMTP_FROM: str = ""          # defaults to SMTP_USER if blank
-    GHMC_EMAIL: str = ""         # GHMC grievance inbox (recipient)
-
     class Config:
         env_file = ".env"
 
