@@ -8,10 +8,23 @@ from app.repositories.issue_repo import get_all_issues, get_issue_lat_lng
 from app.repositories.report_repo import get_reports_by_issue
 from app.models.issue import Issue as IssueModel
 from app.services.issue_service import handle_report
+from app.services.classification import analyze_issue_photo
 from app.auth.dependencies import get_current_user, get_optional_user
 from app.models.user import User
 
 router = APIRouter(prefix="/api/issues", tags=["issues"])
+
+
+@router.post("/analyze")
+async def analyze_image(
+    image: UploadFile = File(...),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """Analyze an uploaded photo and suggest a category + description (no DB write)."""
+    image_bytes = await image.read()
+    if not image_bytes:
+        raise HTTPException(400, detail="Empty image upload")
+    return await analyze_issue_photo(image_bytes, image.filename)
 
 
 @router.post("/report", response_model=IssueReportResponse, status_code=201)

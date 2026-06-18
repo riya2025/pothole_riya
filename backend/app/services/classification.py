@@ -9,7 +9,21 @@ from app.config import settings
 
 VALID_TYPES = {"pothole", "garbage", "streetlight", "other"}
 GROQ_TEXT_MODEL = "llama-3.1-8b-instant"
-GROQ_VISION_MODEL = "llama-3.2-11b-vision-preview"
+GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+
+MAX_DESCRIPTION_LEN = 240
+
+VISION_ANALYZE_PROMPT = """Look at this photo of a civic issue and respond with JSON only, no other text:
+{"category":"<name>","description":"<one short factual sentence>"}
+
+<name> must be exactly one of: pothole, garbage, streetlight, other
+pothole = road damage, holes, cracks in pavement
+garbage = trash, waste, litter, overflowing bins, dumping
+streetlight = broken street lamps, dark areas from failed lighting
+other = anything else
+
+The description should be a single concise sentence (under 30 words) suitable for
+a civic complaint, describing what is wrong and where it appears. No emojis."""
 
 TEXT_SYSTEM_PROMPT = """You classify civic issue reports into exactly one category.
 Reply with JSON only, no other text: {"category":"<name>"}
@@ -117,6 +131,65 @@ async def _classify_from_image(
         "response_format": {"type": "json_object"},
     })
     return _parse_groq_category(raw or "")
+
+
+def _clean_description(raw: str | None) -> str:
+    text = (raw or "").strip().strip('"').strip()
+    text = re.sub(r"\s+", " ", text)
+    if len(text) > MAX_DESCRIPTION_LEN:
+        text = text[:MAX_DESCRIPTION_LEN].rsplit(" ", 1)[0].rstrip() + "…"
+    return text
+
+
+async def analyze_issue_photo(
+    image_bytes: bytes,
+    image_filename: str | None = None,
+) -> dict:
+    """
+    Run Groq vision on a photo and return both a category and an auto-generated
+    description. Returns {"category": str, "description": str, "source": str}.
+    Falls back gracefully when Groq is unavailable or fails.
+    """
+    if not (image_bytes and settings.GROQ_API_KEY):
+        return {"category": "", "description": "", "source": "unavailable"}
+
+    mime = _guess_mime(image_filename)
+    b64 = base64.standard_b64encode(image_bytes).decode("ascii")
+    data_url = f"data:{mime};base64,{b64}"
+
+    raw = await _groq_chat({
+        "model": GROQ_VISION_MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": VISION_ANALYZE_PROMPT},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ],
+        "max_tokens": 160,
+        "temperature": 0.2,
+        "response_format": {"type": "json_object"},
+    })
+
+    category = ""
+    description = ""
+    if raw:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict):
+                cat = str(data.get("category", "")).strip().lower()
+                if cat in VALID_TYPES:
+                    category = cat
+                description = _clean_description(str(data.get("description", "")))
+        except json.JSONDecodeError:
+            category = _parse_groq_category(raw) or ""
+
+    if not category:
+        category = _parse_groq_category(raw or "") or "other"
+
+    return {"category": category, "description": description, "source": "groq_vision"}
 
 
 async def _classify_from_text(description: str) -> str | None:
