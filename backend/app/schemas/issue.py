@@ -24,6 +24,7 @@ class IssueReportResponse(BaseModel):
     address: Optional[str] = None
     type: str
     classification_source: Optional[str] = None  # "groq_vision" | "groq" | "keywords"
+    image_url: Optional[str] = None
 
 
 class ReportOut(BaseModel):

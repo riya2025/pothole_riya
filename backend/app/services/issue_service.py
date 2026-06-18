@@ -66,6 +66,7 @@ async def handle_report(
                 "latitude": lat,
                 "longitude": lng,
                 "classification_source": classification_source,
+                "image_url": image_url,
             }
         else:
             new_issue = issue_repo.create_issue(db, issue_type, lat, lng, address)
@@ -87,6 +88,7 @@ async def handle_report(
                 "latitude": lat,
                 "longitude": lng,
                 "classification_source": classification_source,
+                "image_url": image_url,
             }
     finally:
         db.close()
