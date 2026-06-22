@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, List
@@ -29,6 +29,7 @@ async def analyze_image(
 
 @router.post("/report", response_model=IssueReportResponse, status_code=201)
 async def report_issue(
+    background_tasks: BackgroundTasks,
     description: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
@@ -45,6 +46,7 @@ async def report_issue(
         user_id=current_user.id if current_user else None,
         image_bytes=image_bytes,
         image_filename=image_filename,
+        background_tasks=background_tasks,
     )
     return result
 

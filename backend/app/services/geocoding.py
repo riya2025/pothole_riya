@@ -27,6 +27,11 @@ def _cache_key(lat: float, lng: float) -> tuple[float, float]:
     return (round(lat, 4), round(lng, 4))
 
 
+def get_cached_address(lat: float, lng: float) -> str | None:
+    """Return an already-resolved address for these coords, if cached (no network)."""
+    return _GEOCODE_CACHE.get(_cache_key(lat, lng))
+
+
 async def _try_nominatim(client: httpx.AsyncClient, lat: float, lng: float) -> str | None:
     resp = await client.get(
         NOMINATIM_URL,
