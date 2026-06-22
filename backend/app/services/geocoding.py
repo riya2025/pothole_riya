@@ -6,7 +6,6 @@ instance aggressively rate-limits / blocks shared server IPs, we retry once and
 then fall back to BigDataCloud's keyless reverse-geocode endpoint before finally
 degrading to raw coordinates.
 """
-import asyncio
 import httpx
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
@@ -16,6 +15,16 @@ HEADERS = {
     "User-Agent": "CivicWatch/1.0 (https://github.com/riya2025/pothole_riya)",
     "Accept-Language": "en",
 }
+
+# Reports cluster in the same areas, so cache resolved addresses keyed by
+# coordinates rounded to ~11m. This avoids repeat external calls (and dodges
+# Nominatim's per-IP rate limit) for nearby/duplicate reports. In-memory only.
+_GEOCODE_CACHE: dict[tuple[float, float], str] = {}
+_GEOCODE_CACHE_MAX = 5000
+
+
+def _cache_key(lat: float, lng: float) -> tuple[float, float]:
+    return (round(lat, 4), round(lng, 4))
 
 
 async def _try_nominatim(client: httpx.AsyncClient, lat: float, lng: float) -> str | None:
@@ -63,25 +72,32 @@ async def _try_bigdatacloud(client: httpx.AsyncClient, lat: float, lng: float) -
 
 async def reverse_geocode(lat: float, lng: float) -> str:
     """Convert coordinates to a readable address string. Falls back to raw coordinates on failure."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        # 1. Nominatim with a single retry (handles transient 429/timeouts).
-        for attempt in range(2):
-            try:
-                address = await _try_nominatim(client, lat, lng)
-                if address:
-                    return address
-            except Exception as e:
-                print(f"⚠️ Nominatim attempt {attempt + 1} failed for ({lat}, {lng}): {e}")
-                if attempt == 0:
-                    await asyncio.sleep(1.1)  # respect Nominatim's 1 req/sec policy
+    key = _cache_key(lat, lng)
+    cached = _GEOCODE_CACHE.get(key)
+    if cached is not None:
+        return cached
 
-        # 2. Fallback provider (no key, reliable for city-level results).
+    address: str | None = None
+    # Short timeout so a slow/blocked provider can't dominate request latency.
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        # 1. Nominatim (best street-level detail). Single attempt — on failure we
+        #    fall straight through to the fallback rather than waiting to retry.
         try:
-            address = await _try_bigdatacloud(client, lat, lng)
-            if address:
-                return address
+            address = await _try_nominatim(client, lat, lng)
         except Exception as e:
-            print(f"⚠️ BigDataCloud failed for ({lat}, {lng}): {e}")
+            print(f"⚠️ Nominatim failed for ({lat}, {lng}): {e}")
+
+        # 2. Fallback provider (keyless, no IP bans, reliable city-level results).
+        if not address:
+            try:
+                address = await _try_bigdatacloud(client, lat, lng)
+            except Exception as e:
+                print(f"⚠️ BigDataCloud failed for ({lat}, {lng}): {e}")
 
     # 3. Last resort: readable coordinates.
-    return f"{lat:.5f}, {lng:.5f}"
+    result = address or f"{lat:.5f}, {lng:.5f}"
+
+    # Cache only successful provider lookups (not the raw-coordinate fallback).
+    if address and len(_GEOCODE_CACHE) < _GEOCODE_CACHE_MAX:
+        _GEOCODE_CACHE[key] = result
+    return result

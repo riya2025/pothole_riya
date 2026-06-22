@@ -1,3 +1,4 @@
+import asyncio
 from sqlalchemy.orm import Session
 from app.services.classification import classify_issue
 from app.services.geocoding import reverse_geocode
@@ -30,18 +31,18 @@ async def handle_report(
     db = sessions[city]()
 
     try:
-        # 2. Classify via Groq vision (photo) or text, then keyword fallback
-        issue_type, classification_source = await classify_issue(
-            description,
-            image_bytes=image_bytes,
-            image_filename=image_filename,
+        # 2-4. Classify (Groq), reverse geocode, and upload the image concurrently.
+        # These are independent, slow, external calls — running them in parallel
+        # instead of sequentially cuts report latency to ~the slowest single call.
+        (issue_type, classification_source), address, image_url = await asyncio.gather(
+            classify_issue(
+                description,
+                image_bytes=image_bytes,
+                image_filename=image_filename,
+            ),
+            reverse_geocode(lat, lng),
+            save_report_image(image_bytes, image_filename),
         )
-
-        # 3. Reverse geocode
-        address = await reverse_geocode(lat, lng)
-
-        # 4. Save uploaded image (Cloudinary in prod, local disk in dev)
-        image_url = await save_report_image(image_bytes, image_filename) if image_bytes else None
 
         # 5. Deduplication in the selected city database
         existing = issue_repo.find_nearby_issue(db, lat, lng, radius_meters=10.0)

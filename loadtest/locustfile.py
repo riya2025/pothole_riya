@@ -132,3 +132,14 @@ class CivicUser(HttpUser):
             files=files,
             name="POST /api/issues/report",
         )
+
+    @tag("analyze")
+    @task(1)
+    def analyze_image(self):
+        # Exercises the Groq vision endpoint (no DB write).
+        files = {"image": ("loadtest.jpg", io.BytesIO(_TINY_JPEG), "image/jpeg")}
+        self.client.post(
+            "/api/issues/analyze",
+            files=files,
+            name="POST /api/issues/analyze",
+        )

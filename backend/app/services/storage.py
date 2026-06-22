@@ -4,6 +4,7 @@ Persist report images.
 Local disk (uploads/) works for development only. On Render/Vercel the filesystem
 is ephemeral — files disappear on redeploy. Set Cloudinary env vars in production.
 """
+import asyncio
 import os
 import uuid
 import aiofiles
@@ -36,7 +37,10 @@ async def save_report_image(image_bytes: bytes, image_filename: str | None) -> s
             api_secret=settings.CLOUDINARY_API_SECRET,
             secure=True,
         )
-        result = cloudinary.uploader.upload(
+        # cloudinary.uploader.upload is synchronous and would block the asyncio
+        # event loop (stalling all other requests). Run it in a worker thread.
+        result = await asyncio.to_thread(
+            cloudinary.uploader.upload,
             image_bytes,
             folder="civicwatch/reports",
             resource_type="image",
