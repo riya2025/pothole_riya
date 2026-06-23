@@ -20,6 +20,10 @@ if raw_postgres_url:
 # so they share a single engine/pool. On local SQLite they're separate files.
 CITY_KEYS = ["users", "hyderabad", "bangalore", "vijayawada"]
 
+# True when every "city" maps to the same physical Postgres DB (production).
+# Lets callers avoid querying the same database multiple times.
+SHARED_DB = bool(raw_postgres_url)
+
 Base = declarative_base()
 
 

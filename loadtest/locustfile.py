@@ -37,9 +37,11 @@ Cautions for production
 """
 import base64
 import io
+import json
 import os
 import pathlib
 import random
+import threading
 
 from locust import HttpUser, task, tag, between
 
@@ -62,9 +64,13 @@ _TINY_JPEG = base64.b64decode(
     "AAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AfwD/2Q=="
 )
 
-# Load the real sample photos from the repo's images/ folder, each paired with a
-# matching description so reports are realistic per category.
-_IMAGE_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+# Load the real sample photos, each paired with a matching description so reports
+# are realistic per category. Defaults to the repo's images/ folder, but can be
+# overridden with LOAD_IMAGE_DIR (useful when images live outside the repo).
+_IMAGE_DIR = pathlib.Path(
+    os.getenv("LOAD_IMAGE_DIR")
+    or (pathlib.Path(__file__).resolve().parent.parent / "images")
+)
 _REAL_IMAGES: list[tuple[str, str, str, bytes]] = []
 for _fname, _mime, _desc in [
     ("pothole.png", "image/png", "Large pothole in the middle of the road, dangerous for two-wheelers."),
@@ -90,6 +96,19 @@ DESCRIPTIONS = [
     "Streetlight not working, the whole street is dark at night.",
     "Broken footpath and debris blocking the walkway.",
 ]
+
+# ── Auth / user-flow test config ─────────────────────────────────────────────
+# A single seeded account is used to exercise login + "My Reports". clerk-sync
+# and register draw from a small capped pool of emails so we never create more
+# than ~POOL test users (keeps DB pollution minimal and cleanup easy).
+SEED_EMAIL = "loadtest_seed@example.com"
+SEED_PASSWORD = "LoadTest123!"
+SEED_NAME = "Load Test Seed"
+EMAIL_POOL_SIZE = 50
+
+# Shared, one-time-initialized auth state (token + user id for the seed account).
+_auth_lock = threading.Lock()
+_auth_state: dict = {"token": None, "user_id": None, "ready": False}
 
 
 class CivicUser(HttpUser):
@@ -170,4 +189,97 @@ class CivicUser(HttpUser):
             "/api/issues/analyze",
             files=files,
             name="POST /api/issues/analyze",
+        )
+
+    # ── Auth + user flows ────────────────────────────────────────────────────
+    def _ensure_seed_user(self):
+        """Create (once) and log in the seed account; cache token + user id."""
+        if _auth_state["ready"]:
+            return
+        with _auth_lock:
+            if _auth_state["ready"]:
+                return
+            with self.client.post(
+                "/api/auth/register",
+                json={"name": SEED_NAME, "email": SEED_EMAIL, "password": SEED_PASSWORD},
+                name="POST /api/auth/register [seed]",
+                catch_response=True,
+            ) as r:
+                if r.status_code == 201:
+                    _auth_state["user_id"] = r.json().get("id")
+                    r.success()
+                elif r.status_code == 400:  # already registered — expected
+                    r.success()
+            login = self.client.post(
+                "/api/auth/login",
+                data={"username": SEED_EMAIL, "password": SEED_PASSWORD},
+                name="POST /api/auth/login [seed]",
+            )
+            if login.ok:
+                token = login.json().get("access_token")
+                _auth_state["token"] = token
+                if _auth_state["user_id"] is None and token:
+                    try:
+                        payload = token.split(".")[1]
+                        payload += "=" * (-len(payload) % 4)
+                        decoded = json.loads(base64.urlsafe_b64decode(payload))
+                        _auth_state["user_id"] = int(decoded["sub"])
+                    except Exception:
+                        pass
+            _auth_state["ready"] = True
+
+    @tag("login")
+    @task(1)
+    def login(self):
+        self._ensure_seed_user()
+        self.client.post(
+            "/api/auth/login",
+            data={"username": SEED_EMAIL, "password": SEED_PASSWORD},
+            name="POST /api/auth/login",
+        )
+
+    @tag("clerksync")
+    @task(1)
+    def clerk_sync(self):
+        n = random.randint(0, EMAIL_POOL_SIZE - 1)
+        self.client.post(
+            "/api/auth/clerk-sync",
+            json={
+                "name": f"Clerk User {n}",
+                "email": f"loadtest_clerk_{n}@example.com",
+                "clerk_id": f"load_clerk_{n}",
+            },
+            name="POST /api/auth/clerk-sync",
+        )
+
+    @tag("register")
+    @task(1)
+    def register(self):
+        n = random.randint(0, EMAIL_POOL_SIZE - 1)
+        with self.client.post(
+            "/api/auth/register",
+            json={
+                "name": f"Reg User {n}",
+                "email": f"loadtest_reg_{n}@example.com",
+                "password": SEED_PASSWORD,
+            },
+            name="POST /api/auth/register",
+            catch_response=True,
+        ) as r:
+            # 201 = created, 400 = already exists (both are valid fast paths).
+            if r.status_code in (201, 400):
+                r.success()
+
+    @tag("myreports")
+    @task(1)
+    def my_reports(self):
+        self._ensure_seed_user()
+        token = _auth_state.get("token")
+        user_id = _auth_state.get("user_id")
+        if not token or user_id is None:
+            return
+        self.client.get(
+            f"/api/users/{user_id}/issues",
+            headers={"Authorization": f"Bearer {token}"},
+            name="GET /api/users/{id}/issues",
         )
