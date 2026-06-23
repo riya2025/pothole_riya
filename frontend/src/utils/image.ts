@@ -34,7 +34,7 @@ export async function compressImage(
         // `from-image` applies EXIF orientation so the output isn't sideways.
         bitmap = await createImageBitmap(file, {
             imageOrientation: "from-image",
-        } as ImageBitmapOptions);
+        } as unknown as ImageBitmapOptions);
     } catch {
         return file; // Undecodable — just upload the original.
     }

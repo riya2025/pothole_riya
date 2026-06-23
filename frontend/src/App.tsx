@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Provider } from "react-redux";
 import { ClerkProvider } from "@clerk/clerk-react";
 import Navbar from "./components/Navbar";
 import ClerkAuthBridge from "./components/ClerkAuthBridge";
@@ -10,7 +11,9 @@ import ReportSuccess from "./pages/ReportSuccess";
 import MyReports from "./pages/MyReports";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import { restoreUserFromSession } from "./utils/authSession";
+import { store } from "./store/store";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { setUser as setUserAction, setClerkSyncing as setClerkSyncingAction } from "./store/authSlice";
 import { User } from "./types";
 import {
     CLERK_PUBLISHABLE_KEY,
@@ -30,12 +33,13 @@ function warmBackend() {
 
 interface AuthContextType {
     user: User | null;
-    setUser: React.Dispatch<React.SetStateAction<User | null>>;
+    /** Adapter over the Redux store — kept for backwards compatibility with existing consumers. */
+    setUser: (user: User | null) => void;
     logout: () => void;
     setLogout: React.Dispatch<React.SetStateAction<() => void>>;
     /** True while Clerk session is being synced to backend JWT */
     clerkSyncing: boolean;
-    setClerkSyncing: React.Dispatch<React.SetStateAction<boolean>>;
+    setClerkSyncing: (syncing: boolean) => void;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -79,14 +83,23 @@ function AppRoutes() {
 }
 
 function AppInner() {
-    const [user, setUser] = useState<User | null>(() => restoreUserFromSession());
+    const dispatch = useAppDispatch();
+    const user = useAppSelector((state) => state.auth.user);
+    const clerkSyncing = useAppSelector((state) => state.auth.clerkSyncing);
     const [logoutFn, setLogoutFn] = useState<() => void>(() => () => { });
-    const [clerkSyncing, setClerkSyncing] = useState(false);
 
     useEffect(() => {
         warmBackend();
     }, []);
 
+    const setUser = useCallback(
+        (next: User | null) => dispatch(setUserAction(next)),
+        [dispatch],
+    );
+    const setClerkSyncing = useCallback(
+        (syncing: boolean) => dispatch(setClerkSyncingAction(syncing)),
+        [dispatch],
+    );
     const logout = useCallback(() => logoutFn(), [logoutFn]);
 
     return (
@@ -107,18 +120,24 @@ function AppInner() {
 
 export default function App() {
     if (!isClerkEnabled) {
-        return <AppInner />;
+        return (
+            <Provider store={store}>
+                <AppInner />
+            </Provider>
+        );
     }
 
     return (
-        <ClerkProvider
-            publishableKey={CLERK_PUBLISHABLE_KEY}
-            localization={clerkLocalization}
-            afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
-            signInFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-            signUpFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-        >
-            <AppInner />
-        </ClerkProvider>
+        <Provider store={store}>
+            <ClerkProvider
+                publishableKey={CLERK_PUBLISHABLE_KEY}
+                localization={clerkLocalization}
+                afterSignOutUrl={CLERK_AFTER_SIGN_OUT_URL}
+                signInFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                signUpFallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+            >
+                <AppInner />
+            </ClerkProvider>
+        </Provider>
     );
 }
