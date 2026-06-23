@@ -38,6 +38,7 @@ Cautions for production
 import base64
 import io
 import os
+import pathlib
 import random
 
 from locust import HttpUser, task, tag, between
@@ -54,15 +55,29 @@ _VERIFY_TLS = False
 # Opt-in: attach an image to reports (exercises Groq vision + Cloudinary upload).
 SEND_IMAGE = os.getenv("LOAD_SEND_IMAGE", "0") == "1"
 
-# A minimal valid 1x1 JPEG so multipart uploads are well-formed when enabled.
+# A minimal valid 1x1 JPEG used only as a fallback if no real images are found.
 _TINY_JPEG = base64.b64decode(
     "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRof"
     "Hh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAAB"
     "AAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AfwD/2Q=="
 )
 
-# Fixed test coordinates per city. Reusing the same point lets the backend's
-# 10m dedup attach reports to one issue instead of spawning many new ones.
+# Load the real sample photos from the repo's images/ folder, each paired with a
+# matching description so reports are realistic per category.
+_IMAGE_DIR = pathlib.Path(__file__).resolve().parent.parent / "images"
+_REAL_IMAGES: list[tuple[str, str, str, bytes]] = []
+for _fname, _mime, _desc in [
+    ("pothole.png", "image/png", "Large pothole in the middle of the road, dangerous for two-wheelers."),
+    ("garbage.jpeg", "image/jpeg", "Garbage pile not cleared for several days near the junction."),
+    ("streetlight.png", "image/png", "Streetlight not working, the whole street is dark at night."),
+]:
+    _path = _IMAGE_DIR / _fname
+    if _path.exists():
+        _REAL_IMAGES.append((_fname, _mime, _desc, _path.read_bytes()))
+
+# Base coordinates per city. We jitter around these so each report is a distinct
+# NEW issue (>10m apart) — forcing the backend to run Groq vision classification
+# + Cloudinary upload in the background for every report.
 CITY_COORDS = {
     "hyderabad": (17.385000, 78.486700),
     "bangalore": (12.971600, 77.594600),
@@ -113,19 +128,31 @@ class CivicUser(HttpUser):
     def health(self):
         self.client.get("/", name="GET /")
 
+    def _pick_image(self):
+        """Return (filename, mime, description, bytes) for a real photo, or a
+        tiny-JPEG fallback paired with a generic description."""
+        if _REAL_IMAGES:
+            return random.choice(_REAL_IMAGES)
+        return ("loadtest.jpg", "image/jpeg", random.choice(DESCRIPTIONS), _TINY_JPEG)
+
     @tag("write")
     @task(1)
     def report_issue(self):
         city = random.choice(list(CITY_COORDS))
-        lat, lng = CITY_COORDS[city]
+        base_lat, base_lng = CITY_COORDS[city]
+        # Jitter ~±200m so each report is a distinct new issue (>10m dedup radius).
+        lat = base_lat + random.uniform(-0.002, 0.002)
+        lng = base_lng + random.uniform(-0.002, 0.002)
+
+        fname, mime, desc, content = self._pick_image()
         data = {
-            "description": random.choice(DESCRIPTIONS),
+            "description": desc,
             "latitude": str(lat),
             "longitude": str(lng),
         }
         files = None
         if SEND_IMAGE:
-            files = {"image": ("loadtest.jpg", io.BytesIO(_TINY_JPEG), "image/jpeg")}
+            files = {"image": (fname, io.BytesIO(content), mime)}
         self.client.post(
             "/api/issues/report",
             data=data,
@@ -137,7 +164,8 @@ class CivicUser(HttpUser):
     @task(1)
     def analyze_image(self):
         # Exercises the Groq vision endpoint (no DB write).
-        files = {"image": ("loadtest.jpg", io.BytesIO(_TINY_JPEG), "image/jpeg")}
+        fname, mime, _desc, content = self._pick_image()
+        files = {"image": (fname, io.BytesIO(content), mime)}
         self.client.post(
             "/api/issues/analyze",
             files=files,
