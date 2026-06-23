@@ -2,6 +2,7 @@ import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from "reac
 import { useNavigate } from "react-router-dom";
 import { reportIssue, analyzeIssueImage } from "../services/api";
 import { ReportSubmitResult } from "../types";
+import { compressImage } from "../utils/image";
 import exifr from 'exifr';
 import L from "leaflet";
 import { MAP_TILE_OPTIONS, MAP_TILE_URL } from "../config/map";
@@ -138,10 +139,15 @@ export default function ReportForm({
     };
 
     const processImage = async (file: File) => {
-        setImage(file);
-        setImagePreview(URL.createObjectURL(file));
+        // Read GPS from the ORIGINAL file first — compression strips EXIF metadata.
         await detectGpsFromImage(file);
-        autoDescribeImage(file);
+
+        // Shrink large photos before they're uploaded/analyzed (big speed win).
+        const optimized = await compressImage(file).catch(() => file);
+
+        setImage(optimized);
+        setImagePreview(URL.createObjectURL(optimized));
+        autoDescribeImage(optimized);
     };
 
     const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
