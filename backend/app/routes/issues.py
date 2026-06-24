@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile, Request
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, List
@@ -11,24 +11,62 @@ from app.services.issue_service import handle_report
 from app.services.classification import analyze_issue_photo
 from app.auth.dependencies import get_current_user, get_optional_user
 from app.models.user import User
+from app.rate_limit import limiter
 
 router = APIRouter(prefix="/api/issues", tags=["issues"])
 
+# Upload limits: reject oversized or non-image files before processing to avoid
+# memory exhaustion (DoS) and wasted work on bad input.
+MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+}
+
+
+def _validate_image_upload(image: UploadFile) -> None:
+    """Reject uploads that aren't images or exceed the size limit."""
+    content_type = (image.content_type or "").lower()
+    if content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type '{content_type or 'unknown'}'. Upload a JPEG, PNG, WebP, or HEIC image.",
+        )
+    # Starlette populates .size for multipart uploads; reject early when too big.
+    if image.size is not None and image.size > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Image too large. Maximum size is {MAX_IMAGE_BYTES // (1024 * 1024)} MB.",
+        )
+
 
 @router.post("/analyze")
+@limiter.limit("20/minute")
 async def analyze_image(
+    request: Request,
     image: UploadFile = File(...),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
     """Analyze an uploaded photo and suggest a category + description (no DB write)."""
+    _validate_image_upload(image)
     image_bytes = await image.read()
     if not image_bytes:
         raise HTTPException(400, detail="Empty image upload")
+    if len(image_bytes) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Image too large. Maximum size is {MAX_IMAGE_BYTES // (1024 * 1024)} MB.",
+        )
     return await analyze_issue_photo(image_bytes, image.filename)
 
 
 @router.post("/report", response_model=IssueReportResponse, status_code=201)
+@limiter.limit("30/minute")
 async def report_issue(
+    request: Request,
     background_tasks: BackgroundTasks,
     description: str = Form(...),
     latitude: float = Form(...),
@@ -36,8 +74,15 @@ async def report_issue(
     image: Optional[UploadFile] = File(None),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
+    if image is not None:
+        _validate_image_upload(image)
     image_bytes = await image.read() if image else None
     image_filename = image.filename if image else None
+    if image_bytes is not None and len(image_bytes) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Image too large. Maximum size is {MAX_IMAGE_BYTES // (1024 * 1024)} MB.",
+        )
 
     result = await handle_report(
         description=description,

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -7,20 +7,24 @@ from app.schemas.user import UserCreate, UserOut, Token, ClerkSyncRequest
 from app.repositories.user_repo import get_user_by_email, create_user, verify_password
 from app.services.auth_service import create_access_token
 from app.services.clerk_auth import verify_clerk_token, ClerkAuthError
+from app.rate_limit import limiter
 import secrets
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=UserOut, status_code=201)
-def register(payload: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, payload: UserCreate, db: Session = Depends(get_db)):
     if get_user_by_email(db, payload.email):
         raise HTTPException(400, detail="Email already registered")
     return create_user(db, payload.name, payload.email, payload.password)
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("10/minute")
 def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
@@ -36,7 +40,9 @@ def login(
 
 
 @router.post("/clerk-sync", response_model=Token)
+@limiter.limit("20/minute")
 def clerk_sync(
+    request: Request,
     payload: ClerkSyncRequest,
     authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),

@@ -2,15 +2,22 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 from app.routes import auth, issues, users
 from app.config import settings
 from app.database import create_tables
+from app.rate_limit import limiter
 
 app = FastAPI(
     title="Civic Issue Reporting API",
     description="Report and track civic issues like potholes, garbage, and streetlights.",
     version="1.0.0",
 )
+
+# ── Rate limiting ───────────────────────────────────────────────────────────────
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ── Auto-create tables on startup (SQLite) ────────────────────────────────────
 @app.on_event("startup")
@@ -26,8 +33,9 @@ app.add_middleware(
         "https://pothole-riya.vercel.app",
         "https://civic-issue-api-612t.onrender.com"
     ],
-    # Allow Vercel preview/branch deployments (e.g. pothole-riya-git-*.vercel.app)
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    # Allow ONLY this project's Vercel preview/branch deployments
+    # (e.g. pothole-riya-git-*.vercel.app), not every *.vercel.app site.
+    allow_origin_regex=r"https://pothole-riya[a-z0-9-]*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
