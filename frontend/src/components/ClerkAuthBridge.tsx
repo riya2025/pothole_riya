@@ -1,5 +1,5 @@
 import { useEffect, useContext, useRef } from "react";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import { useUser, useClerk, useAuth } from "@clerk/clerk-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../App";
 import { clerkSync } from "../services/api";
@@ -14,6 +14,7 @@ import {
 
 export default function ClerkAuthBridge() {
     const { user: clerkUser, isSignedIn, isLoaded } = useUser();
+    const { getToken } = useAuth();
     const { signOut } = useClerk();
     const { setUser, setLogout, setClerkSyncing } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -72,7 +73,11 @@ export default function ClerkAuthBridge() {
             let lastErr: unknown;
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
-                    return await clerkSync(name, email, clerkUser.id);
+                    const clerkToken = await getToken();
+                    if (!clerkToken) {
+                        throw new Error("Could not obtain Clerk session token");
+                    }
+                    return await clerkSync(name, email, clerkUser.id, clerkToken);
                 } catch (err) {
                     lastErr = err;
                     if (attempt < maxAttempts) {
@@ -110,6 +115,7 @@ export default function ClerkAuthBridge() {
         isLoaded,
         isSignedIn,
         clerkUser,
+        getToken,
         setUser,
         setClerkSyncing,
         navigate,

@@ -28,8 +28,17 @@ export const getAllIssues = () => API.get("/api/issues");
 
 export const getIssueDetail = (issueId: number) => API.get(`/api/issues/${issueId}`);
 
-export const clerkSync = (name: string, email: string, clerkId: string) =>
-    API.post("/api/auth/clerk-sync", { name, email, clerk_id: clerkId });
+export const clerkSync = (
+    name: string,
+    email: string,
+    clerkId: string,
+    clerkToken: string,
+) =>
+    API.post(
+        "/api/auth/clerk-sync",
+        { name, email, clerk_id: clerkId },
+        { headers: { Authorization: `Bearer ${clerkToken}` } },
+    );
 
 export const reportIssue = (formData: FormData) =>
     API.post("/api/issues/report", formData, {

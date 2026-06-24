@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
@@ -17,6 +17,13 @@ def get_user_issues(
     user_id: int,
     current_user: User = Depends(get_current_user),
 ):
+    # Access control: a user may only read their own reports. Without this check
+    # any authenticated user could read another user's reports by changing the id.
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only view your own reports",
+        )
     from app.database import sessions, SHARED_DB
     from app.services.issue_service import get_city_from_coords
 

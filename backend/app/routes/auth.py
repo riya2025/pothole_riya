@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.database import get_db
 from app.schemas.user import UserCreate, UserOut, Token, ClerkSyncRequest
 from app.repositories.user_repo import get_user_by_email, create_user, verify_password
 from app.services.auth_service import create_access_token
+from app.services.clerk_auth import verify_clerk_token, ClerkAuthError
 import secrets
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -34,8 +36,41 @@ def login(
 
 
 @router.post("/clerk-sync", response_model=Token)
-def clerk_sync(payload: ClerkSyncRequest, db: Session = Depends(get_db)):
-    """Find or create a user from Clerk OAuth and return a backend JWT."""
+def clerk_sync(
+    payload: ClerkSyncRequest,
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """Find or create a user from a verified Clerk session and return a backend JWT.
+
+    The caller MUST send the Clerk session token as `Authorization: Bearer <token>`.
+    We verify it server-side and require the verified Clerk user id (`sub`) to match
+    the claimed `clerk_id`, so a JWT can't be minted for an arbitrary account.
+    """
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Clerk session token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    clerk_token = authorization.split(" ", 1)[1].strip()
+
+    try:
+        claims = verify_clerk_token(clerk_token)
+    except ClerkAuthError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Clerk session verification failed: {exc}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    verified_clerk_id = claims.get("sub")
+    if not verified_clerk_id or verified_clerk_id != payload.clerk_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Clerk session does not match the requested account",
+        )
+
     user = get_user_by_email(db, payload.email)
     if not user:
         random_password = secrets.token_urlsafe(32)

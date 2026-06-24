@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,POST /api/issues/report,HTTPError('502 Server Error: Bad Gateway for url: POST /api/issues/report'),3
+POST,POST /api/issues/analyze,HTTPError('502 Server Error: Bad Gateway for url: POST /api/issues/analyze'),3
