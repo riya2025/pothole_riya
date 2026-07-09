@@ -1376,6 +1376,7 @@ a:hover {
 }
 
 .report-success-card {
+  position: relative;
   width: min(100%, 480px);
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -1383,6 +1384,35 @@ a:hover {
   padding: 40px 32px;
   text-align: center;
   backdrop-filter: var(--glass-blur);
+  overflow: hidden;
+}
+
+.report-card-watermark {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.14;
+  filter: saturate(1.05) contrast(1.05);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.report-card-watermark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    165deg,
+    rgba(15, 18, 26, 0.55) 0%,
+    rgba(15, 18, 26, 0.82) 45%,
+    rgba(15, 18, 26, 0.92) 100%
+  );
+}
+
+.report-success-card > *:not(.report-card-watermark) {
+  position: relative;
+  z-index: 1;
 }
 
 .report-success-icon {
@@ -2526,6 +2556,7 @@ a:hover {
 
 /* ── Issue Card ──────────────────────────────────────────────────────── */
 .issue-card {
+  --issue-accent: var(--accent);
   background: var(--bg-card);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -2538,6 +2569,19 @@ a:hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  padding-left: 28px;
+}
+
+.issue-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  background: linear-gradient(180deg, var(--issue-accent), color-mix(in srgb, var(--issue-accent) 55%, #ffffff 45%));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--issue-accent) 45%, transparent 55%);
+  pointer-events: none;
 }
 
 .issue-card::after {

@@ -13,7 +13,7 @@ export default function IssueMarker({ issue, onShare, onClick }: IssueMarkerProp
 
     return (
         <div className="issue-card"
-            style={{ borderLeft: `4px solid ${color}`, cursor: onClick ? 'pointer' : 'default' }}
+            style={{ "--issue-accent": color, cursor: onClick ? "pointer" : "default" } as React.CSSProperties}
             onClick={() => onClick && onClick(issue)}>
             <div className="issue-card-header">
                 <span className="issue-type-badge" style={{ background: `${color}22`, color }}>

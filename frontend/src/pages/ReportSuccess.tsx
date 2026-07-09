@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { issueIcon, issueColor } from "../utils/helpers";
+import { issueWatermarkUrl } from "../config/issueAssets";
 import { ReportSubmitResult } from "../types";
 
 function buildTwitterShareUrl(text: string, url: string) {
@@ -98,10 +99,16 @@ export default function ReportSuccess() {
 
     const color = issueColor(result.type);
     const isNew = result.status === "created";
+    const watermark = issueWatermarkUrl(result.type);
 
     return (
         <div className="report-success-page">
             <div className="report-success-card">
+                <div
+                    className="report-card-watermark"
+                    style={{ backgroundImage: `url(${watermark})` }}
+                    aria-hidden
+                />
                 <div className="report-success-icon" style={{ background: `${color}22`, color }}>
                     {issueIcon(result.type)}
                 </div>
