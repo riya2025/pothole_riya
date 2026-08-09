@@ -23,7 +23,7 @@ class IssueReportResponse(BaseModel):
     status: str   # "created" | "attached"
     address: Optional[str] = None
     type: str
-    classification_source: Optional[str] = None  # "groq_vision" | "groq" | "keywords"
+    classification_source: Optional[str] = None  # "analyze" | "keywords" | "groq_vision" | "groq"
     image_url: Optional[str] = None
 
 

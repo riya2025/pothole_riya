@@ -60,6 +60,8 @@ export default function ReportForm({
     const [locStatus, setLocStatus] = useState<{ type: "info" | "success" | "warn"; text: string } | null>(null);
     const [analyzing, setAnalyzing] = useState(false);
     const [descAutoFilled, setDescAutoFilled] = useState(false);
+    /** Category from /analyze — sent on submit so finalize can skip a second VLM call. */
+    const [analyzedCategory, setAnalyzedCategory] = useState<string | null>(null);
     const [cameraReady, setCameraReady] = useState(false);
     const [flashOn, setFlashOn] = useState(false);
     const [torchSupported, setTorchSupported] = useState(false);
@@ -180,6 +182,7 @@ export default function ReportForm({
         // Retake should wipe auto-filled / previous text so the next capture can refill.
         setDescription("");
         setDescAutoFilled(false);
+        setAnalyzedCategory(null);
         setAnalyzing(false);
     }, [clearTimers, revokePreview]);
 
@@ -385,8 +388,9 @@ export default function ReportForm({
             }
             const res = await analyzeIssueImage(formData);
             const suggestion = (res.data?.description || "").trim();
-            const category = (res.data?.category || "").trim();
+            const category = (res.data?.category || "").trim().toLowerCase();
             const source = String(res.data?.source || "");
+            const validCategories = new Set(["pothole", "garbage", "streetlight", "other"]);
             const unusable =
                 !suggestion ||
                 isPlaceholderDesc(suggestion) ||
@@ -395,13 +399,17 @@ export default function ReportForm({
                 source === "no_frames";
             if (!unusable) {
                 fillIfEmpty(suggestion);
-            } else if (category && category.toLowerCase() !== "other") {
+                setAnalyzedCategory(validCategories.has(category) ? category : null);
+            } else if (category && category !== "other" && validCategories.has(category)) {
                 fillIfEmpty(categoryFallback(category));
+                setAnalyzedCategory(category);
             } else {
                 fillIfEmpty(mediaFallback);
+                setAnalyzedCategory(null);
             }
         } catch {
             // Timeout / rate-limit / network — never leave the box blank after upload.
+            setAnalyzedCategory(null);
             fillIfEmpty(mediaFallback);
         } finally {
             setAnalyzing(false);
@@ -413,6 +421,7 @@ export default function ReportForm({
         setMediaFile(file);
         setMediaKind(kind);
         setMediaPreview(URL.createObjectURL(file));
+        setAnalyzedCategory(null);
         if (runAnalyze && (kind === "image" || kind === "video")) {
             void autoDescribeMedia(file, kind);
         }
@@ -654,6 +663,9 @@ export default function ReportForm({
             formData.append("description", desc);
             formData.append("latitude", coords.lat.toString());
             formData.append("longitude", coords.lng.toString());
+            if (analyzedCategory) {
+                formData.append("analyzed_category", analyzedCategory);
+            }
             if (mediaFile && mediaKind) {
                 if (mediaKind === "image") {
                     formData.append("image", mediaFile);

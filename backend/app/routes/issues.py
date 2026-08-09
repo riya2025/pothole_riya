@@ -155,10 +155,12 @@ async def report_issue(
     description: str = Form(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
+    analyzed_category: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     media: Optional[UploadFile] = File(None),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
+    """Create/attach a report. Optional analyzed_category from /analyze skips a second VLM call."""
     upload = media or image
     media_content_type = None
     image_bytes = None
@@ -187,6 +189,7 @@ async def report_issue(
         image_filename=image_filename,
         media_content_type=media_content_type,
         background_tasks=background_tasks,
+        analyzed_category=analyzed_category,
     )
     return result
 
