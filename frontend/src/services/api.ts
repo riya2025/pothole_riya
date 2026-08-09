@@ -45,10 +45,15 @@ export const reportIssue = (formData: FormData) =>
         headers: { "Content-Type": "multipart/form-data" },
     });
 
+/** Analyze photo (`image`) or short video (`media`) via Groq vision. */
 export const analyzeIssueImage = (formData: FormData) =>
     API.post("/api/issues/analyze", formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        // Don't hang the report form when Groq is rate-limited.
+        timeout: 25000,
     });
+
+export const analyzeIssueMedia = analyzeIssueImage;
 
 export const getUserIssues = (userId: number) =>
     API.get(`/api/users/${userId}/issues`);

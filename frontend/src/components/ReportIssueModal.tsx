@@ -85,7 +85,7 @@ export default function ReportIssueModal({
                 </div>
                 <div className="report-issue-body" ref={bodyRef}>
                     <p className="report-issue-hint">
-                        Upload a photo — Groq vision will classify potholes, garbage, and streetlights.
+                        Tap for photo, hold for video, or use voice / gallery. Description and GPS fill in automatically.
                     </p>
                     <ReportForm
                         key={open ? "open" : "closed"}

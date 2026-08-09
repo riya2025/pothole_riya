@@ -8,16 +8,18 @@ from app.repositories.issue_repo import get_all_issues, get_issue_lat_lng
 from app.repositories.report_repo import get_reports_by_issue
 from app.models.issue import Issue as IssueModel
 from app.services.issue_service import handle_report
-from app.services.classification import analyze_issue_photo
+from app.services.classification import analyze_issue_photo, analyze_issue_video
+from app.services.storage import media_kind
 from app.auth.dependencies import get_current_user, get_optional_user
 from app.models.user import User
 from app.rate_limit import limiter
 
 router = APIRouter(prefix="/api/issues", tags=["issues"])
 
-# Upload limits: reject oversized or non-image files before processing to avoid
-# memory exhaustion (DoS) and wasted work on bad input.
+# Upload limits: reject oversized or unsupported files before processing.
 MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
+MAX_VIDEO_BYTES = 25 * 1024 * 1024  # 25 MB — short clips only
+MAX_AUDIO_BYTES = 5 * 1024 * 1024   # 5 MB — ~15s voice notes
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg",
     "image/png",
@@ -25,6 +27,57 @@ ALLOWED_IMAGE_TYPES = {
     "image/heic",
     "image/heif",
 }
+ALLOWED_VIDEO_TYPES = {
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+    "video/x-m4v",
+}
+ALLOWED_AUDIO_TYPES = {
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/mp4",
+    "audio/m4a",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/webm",
+    "audio/ogg",
+    "audio/aac",
+}
+
+
+def _max_bytes_for_kind(kind: str) -> int:
+    if kind == "video":
+        return MAX_VIDEO_BYTES
+    if kind == "audio":
+        return MAX_AUDIO_BYTES
+    return MAX_IMAGE_BYTES
+
+
+def _validate_media_upload(upload: UploadFile) -> str:
+    """Validate image/video/audio upload. Returns media kind."""
+    content_type = (upload.content_type or "").lower().split(";")[0].strip()
+    kind = media_kind(upload.filename, content_type)
+
+    allowed = ALLOWED_IMAGE_TYPES | ALLOWED_VIDEO_TYPES | ALLOWED_AUDIO_TYPES
+    # Some browsers send empty or generic MIME for MediaRecorder blobs — fall
+    # back to filename-based kind when content_type is missing/octet-stream.
+    if content_type and content_type not in allowed and content_type != "application/octet-stream":
+        raise HTTPException(
+            status_code=415,
+            detail=(
+                f"Unsupported file type '{content_type}'. "
+                "Upload a photo, short video (mp4/webm), or voice note (webm/m4a/wav)."
+            ),
+        )
+
+    max_bytes = _max_bytes_for_kind(kind)
+    if upload.size is not None and upload.size > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {max_bytes // (1024 * 1024)} MB for {kind}.",
+        )
+    return kind
 
 
 def _validate_image_upload(image: UploadFile) -> None:
@@ -35,7 +88,6 @@ def _validate_image_upload(image: UploadFile) -> None:
             status_code=415,
             detail=f"Unsupported file type '{content_type or 'unknown'}'. Upload a JPEG, PNG, WebP, or HEIC image.",
         )
-    # Starlette populates .size for multipart uploads; reject early when too big.
     if image.size is not None and image.size > MAX_IMAGE_BYTES:
         raise HTTPException(
             status_code=413,
@@ -45,22 +97,54 @@ def _validate_image_upload(image: UploadFile) -> None:
 
 @router.post("/analyze")
 @limiter.limit("20/minute")
-async def analyze_image(
+async def analyze_media(
     request: Request,
-    image: UploadFile = File(...),
+    image: Optional[UploadFile] = File(None),
+    media: Optional[UploadFile] = File(None),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
-    """Analyze an uploaded photo and suggest a category + description (no DB write)."""
-    _validate_image_upload(image)
-    image_bytes = await image.read()
-    if not image_bytes:
-        raise HTTPException(400, detail="Empty image upload")
-    if len(image_bytes) > MAX_IMAGE_BYTES:
+    """Analyze a photo or short video and suggest category + description (no DB write).
+
+    Videos: extract a sharp frame, then run the same Groq vision path as photos.
+    Accepts either `image` (photo) or `media` (photo/video).
+    """
+    upload = media or image
+    if upload is None:
+        raise HTTPException(400, detail="Upload an image or video as 'image' or 'media'.")
+
+    kind = _validate_media_upload(upload)
+    if kind == "audio":
+        raise HTTPException(
+            400,
+            detail="Voice notes can't be vision-analyzed. Add a short text description instead.",
+        )
+
+    file_bytes = await upload.read()
+    if not file_bytes:
+        raise HTTPException(400, detail="Empty media upload")
+
+    max_bytes = _max_bytes_for_kind(kind)
+    if len(file_bytes) > max_bytes:
         raise HTTPException(
             status_code=413,
-            detail=f"Image too large. Maximum size is {MAX_IMAGE_BYTES // (1024 * 1024)} MB.",
+            detail=f"File too large. Maximum size is {max_bytes // (1024 * 1024)} MB for {kind}.",
         )
-    return await analyze_issue_photo(image_bytes, image.filename)
+
+    content_type = (upload.content_type or "").lower().split(";")[0].strip() or None
+    if kind == "video":
+        result = await analyze_issue_video(
+            file_bytes,
+            video_filename=upload.filename,
+            content_type=content_type,
+        )
+        if not result.get("description") and result.get("source") == "no_frames":
+            raise HTTPException(
+                422,
+                detail="Could not read frames from this video. Try MP4/WebM or upload a photo.",
+            )
+        return result
+
+    return await analyze_issue_photo(file_bytes, upload.filename)
 
 
 @router.post("/report", response_model=IssueReportResponse, status_code=201)
@@ -72,17 +156,27 @@ async def report_issue(
     latitude: float = Form(...),
     longitude: float = Form(...),
     image: Optional[UploadFile] = File(None),
+    media: Optional[UploadFile] = File(None),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
-    if image is not None:
-        _validate_image_upload(image)
-    image_bytes = await image.read() if image else None
-    image_filename = image.filename if image else None
-    if image_bytes is not None and len(image_bytes) > MAX_IMAGE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Image too large. Maximum size is {MAX_IMAGE_BYTES // (1024 * 1024)} MB.",
-        )
+    upload = media or image
+    media_content_type = None
+    image_bytes = None
+    image_filename = None
+
+    if upload is not None:
+        kind = _validate_media_upload(upload)
+        media_content_type = (upload.content_type or "").lower().split(";")[0].strip() or None
+        image_bytes = await upload.read()
+        image_filename = upload.filename
+        if not image_bytes:
+            raise HTTPException(400, detail="Empty media upload")
+        max_bytes = _max_bytes_for_kind(kind)
+        if len(image_bytes) > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {max_bytes // (1024 * 1024)} MB for {kind}.",
+            )
 
     result = await handle_report(
         description=description,
@@ -91,6 +185,7 @@ async def report_issue(
         user_id=current_user.id if current_user else None,
         image_bytes=image_bytes,
         image_filename=image_filename,
+        media_content_type=media_content_type,
         background_tasks=background_tasks,
     )
     return result

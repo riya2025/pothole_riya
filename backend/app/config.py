@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # never be guessed from the source code (see validator below).
     SECRET_KEY: str
     GROQ_API_KEY: str = ""
+    # Optional Gemini free-tier fallback when Groq vision hits daily limits.
+    GEMINI_API_KEY: str = ""
+    GEMINI_VISION_MODEL: str = "gemini-flash-lite-latest"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days — fewer slow re-syncs on return visits
     # bcrypt work factor. 12 is very CPU-heavy on small instances; 10 is the
     # OWASP-recommended minimum and ~4x cheaper, which matters under login bursts.
@@ -32,6 +35,13 @@ class Settings(BaseSettings):
     # /api/auth/clerk-sync). CLERK_ISSUER pins which Clerk instance we trust, e.g.
     # https://your-app.clerk.accounts.dev
     CLERK_ISSUER: str = ""
+    # Empty = auto-detect the best vision model available on this Groq API key.
+    GROQ_VISION_MODEL: str = ""
+    GROQ_TEXT_MODEL: str = "llama-3.1-8b-instant"
+    # Keep Groq vision cheap (free-tier TPM): 1 small frame per video by default.
+    VISION_MAX_FRAMES: int = 1
+    VISION_FRAME_MAX_WIDTH: int = 512
+    VISION_JPEG_QUALITY: int = 70
 
     @field_validator("SECRET_KEY")
     @classmethod
@@ -46,6 +56,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 @lru_cache()

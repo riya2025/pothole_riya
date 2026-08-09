@@ -85,6 +85,19 @@ export const resolveMediaUrl = (url: string | null | undefined): string | null =
     return `${base}${url.startsWith("/") ? url : `/${url}`}`;
 };
 
+/** Detect whether a stored report media URL is image, video, or audio. */
+export const detectMediaKind = (url: string | null | undefined): "image" | "video" | "audio" => {
+    if (!url) return "image";
+    const clean = url.split("?")[0].toLowerCase();
+    if (/\/voice[_-]|\bvoice[_-]|\/audio[_-]|\.(mp3|wav|ogg|m4a|aac)$/.test(clean)) {
+        return "audio";
+    }
+    if (/\/video[_-]|\bvideo[_-]|\.(mp4|webm|mov|m4v)$/.test(clean) || clean.includes("/video/upload/")) {
+        return "video";
+    }
+    return "image";
+};
+
 export const getCurrentUser = (): any => {
     const token = localStorage.getItem("token");
     if (!token) return null;

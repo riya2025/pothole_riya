@@ -6,6 +6,7 @@ import { useClerkSession } from "../hooks/useClerkSession";
 import MapView from "../components/MapView";
 import IssueDetailModal from "../components/IssueDetailModal";
 import ReportIssueModal from "../components/ReportIssueModal";
+import { PlusIcon } from "../components/CaptureIcons";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor, filterWithinRadius, haversineM } from "../utils/helpers";
 import { Issue } from "../types";
@@ -31,7 +32,9 @@ function UserMapContent({
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [geoError, setGeoError] = useState("");
-    const [reportOpen, setReportOpen] = useState(searchParams.get("report") === "1");
+    const [reportOpen, setReportOpen] = useState(
+        searchParams.get("report") === "1" || searchParams.get("quick") === "1"
+    );
 
     const openReport = useCallback(() => {
         setReportOpen(true);
@@ -40,14 +43,19 @@ function UserMapContent({
 
     const closeReport = useCallback(() => {
         setReportOpen(false);
-        if (searchParams.get("report")) {
+        if (searchParams.get("report") || searchParams.get("quick")) {
             setSearchParams({}, { replace: true });
         }
     }, [searchParams, setSearchParams]);
 
     useEffect(() => {
+        // Old ?quick=1 links open the single report form.
+        if (searchParams.get("quick") === "1" && searchParams.get("report") !== "1") {
+            setSearchParams({ report: "1" }, { replace: true });
+            return;
+        }
         setReportOpen(searchParams.get("report") === "1");
-    }, [searchParams]);
+    }, [searchParams, setSearchParams]);
 
     useEffect(() => {
         if (!isClerkEnabled) {
@@ -178,6 +186,9 @@ function UserMapContent({
                     </div>
                     <div className="user-map-header-actions">
                         <div className="user-map-badge">{nearbyIssues.length} nearby</div>
+                        <button type="button" className="btn-primary user-map-full-btn" onClick={openReport}>
+                            Report Issue
+                        </button>
                     </div>
                 </div>
 
@@ -220,11 +231,11 @@ function UserMapContent({
 
             <button
                 type="button"
-                className="report-fab"
+                className="report-fab report-fab-full"
                 onClick={openReport}
                 aria-label="Report an issue"
             >
-                <span className="report-fab-icon">+</span>
+                <PlusIcon className="report-fab-icon" size={20} />
                 <span className="report-fab-label">Report</span>
             </button>
 
