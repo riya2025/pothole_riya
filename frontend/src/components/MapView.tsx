@@ -159,6 +159,8 @@ export default function MapView({
             map.remove();
             mapInstanceRef.current = null;
         };
+        // Mount-only map init; center/zoom updates are handled in a separate effect.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [openIssueDetails]);
 
     useEffect(() => {

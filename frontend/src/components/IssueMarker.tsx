@@ -1,6 +1,5 @@
 import React from "react";
 import { issueColor, issueIcon, formatDate } from "../utils/helpers";
-import { Report } from "../types";
 
 interface IssueMarkerProps {
     issue: any; // using any since it merges data for dashboard display
