@@ -3,6 +3,19 @@ import { parseJwt } from "./helpers";
 
 const CLERK_ID_KEY = "clerk_user_id";
 const PROFILE_KEY = "cw_user";
+const GUEST_MODE_KEY = "cw_guest_mode";
+
+export function isGuestMode(): boolean {
+    return sessionStorage.getItem(GUEST_MODE_KEY) === "1";
+}
+
+export function enableGuestMode() {
+    sessionStorage.setItem(GUEST_MODE_KEY, "1");
+}
+
+export function disableGuestMode() {
+    sessionStorage.removeItem(GUEST_MODE_KEY);
+}
 
 export function getStoredProfile(): User | null {
     try {
@@ -49,6 +62,7 @@ export function hydrateUserFromToken(email: string, name: string): User | null {
 }
 
 export function persistAuthSession(user: User, clerkId: string, token: string) {
+    disableGuestMode();
     localStorage.setItem("token", token);
     localStorage.setItem(CLERK_ID_KEY, clerkId);
     localStorage.setItem(PROFILE_KEY, JSON.stringify(user));
@@ -58,6 +72,7 @@ export function clearAuthSession() {
     localStorage.removeItem("token");
     localStorage.removeItem(CLERK_ID_KEY);
     localStorage.removeItem(PROFILE_KEY);
+    disableGuestMode();
 }
 
 export function restoreUserFromSession(): User | null {

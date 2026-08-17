@@ -13,7 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { store } from "./store/store";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
-import { setUser as setUserAction, setClerkSyncing as setClerkSyncingAction } from "./store/authSlice";
+import { setUser as setUserAction, setClerkSyncing as setClerkSyncingAction, enterGuestMode as enterGuestModeAction, exitGuestMode as exitGuestModeAction } from "./store/authSlice";
 import { User } from "./types";
 import {
     CLERK_PUBLISHABLE_KEY,
@@ -40,6 +40,10 @@ interface AuthContextType {
     /** True while Clerk session is being synced to backend JWT */
     clerkSyncing: boolean;
     setClerkSyncing: (syncing: boolean) => void;
+    /** Browsing without an account */
+    isGuest: boolean;
+    enterGuestMode: () => void;
+    exitGuestMode: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -49,18 +53,22 @@ export const AuthContext = createContext<AuthContextType>({
     setLogout: () => { },
     clerkSyncing: false,
     setClerkSyncing: () => { },
+    isGuest: false,
+    enterGuestMode: () => { },
+    exitGuestMode: () => { },
 });
 
 function AppRoutes() {
     const navigate = useNavigate();
-    const { setUser, setLogout } = React.useContext(AuthContext);
+    const { setUser, setLogout, exitGuestMode } = React.useContext(AuthContext);
     useEffect(() => {
         setLogout(() => () => {
             localStorage.removeItem("token");
             setUser(null);
+            exitGuestMode();
             navigate("/");
         });
-    }, [setUser, setLogout, navigate]);
+    }, [setUser, setLogout, navigate, exitGuestMode]);
 
     return (
         <>
@@ -86,6 +94,7 @@ function AppInner() {
     const dispatch = useAppDispatch();
     const user = useAppSelector((state) => state.auth.user);
     const clerkSyncing = useAppSelector((state) => state.auth.clerkSyncing);
+    const isGuest = useAppSelector((state) => state.auth.isGuest);
     const [logoutFn, setLogoutFn] = useState<() => void>(() => () => { });
 
     useEffect(() => {
@@ -100,6 +109,14 @@ function AppInner() {
         (syncing: boolean) => dispatch(setClerkSyncingAction(syncing)),
         [dispatch],
     );
+    const enterGuestMode = useCallback(
+        () => dispatch(enterGuestModeAction()),
+        [dispatch],
+    );
+    const exitGuestMode = useCallback(
+        () => dispatch(exitGuestModeAction()),
+        [dispatch],
+    );
     const logout = useCallback(() => logoutFn(), [logoutFn]);
 
     return (
@@ -110,6 +127,9 @@ function AppInner() {
             setLogout: setLogoutFn,
             clerkSyncing,
             setClerkSyncing,
+            isGuest,
+            enterGuestMode,
+            exitGuestMode,
         }}>
             <BrowserRouter>
                 <AppRoutes />

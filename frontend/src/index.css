@@ -3116,6 +3116,14 @@ a:hover {
   margin-top: 8px;
 }
 
+.auth-skip-btn {
+  margin-top: 16px;
+}
+
+.clerk-auth-container + .auth-skip-btn {
+  margin-top: 20px;
+}
+
 .auth-card form,
 .report-form {
   display: flex;

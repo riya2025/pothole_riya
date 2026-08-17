@@ -13,7 +13,7 @@ function KebabIcon() {
 }
 
 export default function Navbar() {
-    const { user, logout } = useContext(AuthContext);
+    const { user, logout, isGuest, exitGuestMode } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,6 +33,14 @@ export default function Navbar() {
         logout();
         setIsMenuOpen(false);
     };
+
+    const handleExitGuest = () => {
+        exitGuestMode();
+        setIsMenuOpen(false);
+        navigate("/");
+    };
+
+    const showAppNav = user || isGuest;
 
     const closeMenu = () => setIsMenuOpen(false);
 
@@ -54,23 +62,23 @@ export default function Navbar() {
 
     return (
         <nav className="navbar">
-            <div className="nav-brand" onClick={() => { navigate(user ? "/map" : "/"); closeMenu(); }}>
+            <div className="nav-brand" onClick={() => { navigate(showAppNav ? "/map" : "/"); closeMenu(); }}>
                 <span className="brand-icon">📍</span>
                 <span className="brand-name">CivicWatch</span>
             </div>
 
             <div className="nav-links nav-links-desktop">
-                {!user && (
+                {!showAppNav && (
                     <>
                         {navLink("/", "Map View")}
                         {navLink("/admin-issues", "All Reports")}
                     </>
                 )}
-                {user && (
+                {showAppNav && (
                     <>
                         {navLink("/map", "Nearby Map")}
                         {navLink("/map?report=1", "Report Issue")}
-                        {navLink("/my-reports", "My Reports")}
+                        {user && navLink("/my-reports", "My Reports")}
                     </>
                 )}
             </div>
@@ -80,6 +88,12 @@ export default function Navbar() {
                     <div className="user-menu">
                         <span className="user-badge">👤 {user.name || `User #${user.id}`}</span>
                         <button className="btn-outline" onClick={handleLogout}>Logout</button>
+                    </div>
+                ) : isGuest ? (
+                    <div className="user-menu">
+                        <span className="user-badge">Guest</span>
+                        <Link to="/login" className="btn-primary">Sign In</Link>
+                        <button className="btn-outline" onClick={handleExitGuest}>Exit</button>
                     </div>
                 ) : (
                     <div className="auth-buttons">
@@ -101,17 +115,17 @@ export default function Navbar() {
 
                 {isMenuOpen && (
                     <div className="kebab-dropdown">
-                        {!user && (
+                        {!showAppNav && (
                             <>
                                 {navLink("/", "Map View")}
                                 {navLink("/admin-issues", "All Reports")}
                             </>
                         )}
-                        {user && (
+                        {showAppNav && (
                             <>
                                 {navLink("/map", "Nearby Map")}
                                 {navLink("/map?report=1", "Report Issue")}
-                                {navLink("/my-reports", "My Reports")}
+                                {user && navLink("/my-reports", "My Reports")}
                             </>
                         )}
                         <div className="kebab-dropdown-divider" />
@@ -119,6 +133,11 @@ export default function Navbar() {
                             <button className="kebab-dropdown-item danger" onClick={handleLogout}>
                                 Logout
                             </button>
+                        ) : isGuest ? (
+                            <>
+                                <Link to="/login" className="kebab-dropdown-item primary" onClick={closeMenu}>Sign In</Link>
+                                <button className="kebab-dropdown-item" onClick={handleExitGuest}>Exit guest mode</button>
+                            </>
                         ) : (
                             <>
                                 <Link to="/login" className="kebab-dropdown-item" onClick={closeMenu}>Login</Link>

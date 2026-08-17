@@ -21,7 +21,7 @@ function UserMapContent({
     clerkLoaded: boolean;
     isSignedIn: boolean;
 }) {
-    const { user, clerkSyncing } = useContext(AuthContext);
+    const { user, clerkSyncing, isGuest } = useContext(AuthContext);
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -58,13 +58,14 @@ function UserMapContent({
     }, [searchParams, setSearchParams]);
 
     useEffect(() => {
+        if (isGuest) return;
         if (!isClerkEnabled) {
             if (!user) navigate("/login");
             return;
         }
         if (!clerkLoaded || clerkSyncing) return;
         if (!user && !isSignedIn) navigate("/login");
-    }, [user, navigate, clerkLoaded, clerkSyncing, isSignedIn]);
+    }, [user, navigate, clerkLoaded, clerkSyncing, isSignedIn, isGuest]);
 
     useEffect(() => {
         getAllIssues()
@@ -99,51 +100,53 @@ function UserMapContent({
         return filterWithinRadius(issues, userPos[0], userPos[1], RADIUS_M);
     }, [issues, userPos]);
 
-    if (isClerkEnabled && !user && clerkSyncing) {
-        return (
-            <div className="loading-center" style={{ minHeight: "60vh" }}>
-                <div className="spinner" />
-                <p style={{ marginTop: 12, color: "#94A3B8" }}>Connecting to server…</p>
-            </div>
-        );
-    }
-
-    if (isClerkEnabled && !user && !clerkLoaded) {
-        return (
-            <div className="loading-center" style={{ minHeight: "60vh" }}>
-                <div className="spinner" />
-                <p style={{ marginTop: 12, color: "#94A3B8" }}>Loading…</p>
-            </div>
-        );
-    }
-
-    if (!user) {
-        // Signed in with Clerk, but the backend session sync failed (e.g. server
-        // was cold-starting). Surface a retry instead of a blank screen.
-        if (isClerkEnabled && isSignedIn) {
+    if (!isGuest) {
+        if (isClerkEnabled && !user && clerkSyncing) {
             return (
-                <div className="server-retry">
-                    <div className="server-retry-card">
-                        <div className="server-retry-icon">
-                            <div className="spinner" />
-                        </div>
-                        <h2 className="server-retry-title">Waking up the server…</h2>
-                        <p className="server-retry-text">
-                            We couldn't reach the server to finish signing you in. The backend may be
-                            spinning up after a short rest — this usually takes a few seconds.
-                        </p>
-                        <button
-                            type="button"
-                            className="btn-primary server-retry-btn"
-                            onClick={() => window.location.reload()}
-                        >
-                            Try again
-                        </button>
-                    </div>
+                <div className="loading-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner" />
+                    <p style={{ marginTop: 12, color: "#94A3B8" }}>Connecting to server…</p>
                 </div>
             );
         }
-        return null;
+
+        if (isClerkEnabled && !user && !clerkLoaded) {
+            return (
+                <div className="loading-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner" />
+                    <p style={{ marginTop: 12, color: "#94A3B8" }}>Loading…</p>
+                </div>
+            );
+        }
+
+        if (!user) {
+            // Signed in with Clerk, but the backend session sync failed (e.g. server
+            // was cold-starting). Surface a retry instead of a blank screen.
+            if (isClerkEnabled && isSignedIn) {
+                return (
+                    <div className="server-retry">
+                        <div className="server-retry-card">
+                            <div className="server-retry-icon">
+                                <div className="spinner" />
+                            </div>
+                            <h2 className="server-retry-title">Waking up the server…</h2>
+                            <p className="server-retry-text">
+                                We couldn't reach the server to finish signing you in. The backend may be
+                                spinning up after a short rest — this usually takes a few seconds.
+                            </p>
+                            <button
+                                type="button"
+                                className="btn-primary server-retry-btn"
+                                onClick={() => window.location.reload()}
+                            >
+                                Try again
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            return null;
+        }
     }
 
     return (

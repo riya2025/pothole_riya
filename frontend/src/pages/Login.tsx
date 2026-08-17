@@ -5,9 +5,10 @@ import { AuthContext } from "../App";
 import { parseJwt } from "../utils/helpers";
 import { persistAuthSession } from "../utils/authSession";
 import { useNavigate, Link } from "react-router-dom";
-import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
+import { CLERK_AFTER_AUTH_URL, clerkAppearance, isClerkEnabled } from "../config/clerk";
 import { useClerkSession } from "../hooks/useClerkSession";
 import ClerkSignedInGate from "../components/ClerkSignedInGate";
+import SkipLoginButton from "../components/SkipLoginButton";
 
 function ClerkLoginPanel() {
     const { user, clerkSyncing } = useContext(AuthContext);
@@ -47,6 +48,7 @@ function ClerkLoginPanel() {
                     appearance={clerkAppearance}
                 />
             </div>
+            <SkipLoginButton />
         </ClerkSignedInGate>
     );
 }
@@ -93,6 +95,7 @@ function LegacyLoginForm() {
                 </button>
             </form>
             <p className="auth-switch">Don't have an account? <Link to="/register">Sign Up</Link></p>
+            <SkipLoginButton />
         </div>
     );
 }
