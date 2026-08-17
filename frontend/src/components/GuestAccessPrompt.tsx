@@ -15,7 +15,7 @@ export default function GuestAccessPrompt() {
     return (
         <p className="auth-skip">
             <button type="button" className="auth-skip-link" onClick={handleSkip}>
-                Skip
+                Skip this step
             </button>
         </p>
     );
