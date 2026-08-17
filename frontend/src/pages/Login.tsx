@@ -108,7 +108,7 @@ export default function Login() {
                     <div className="graphic-content">
                         <span className="graphic-icon">📍</span>
                         <h1>CivicWatch</h1>
-                        <p>Sign in with Google or email, or explore the map right away — no account required.</p>
+                        <p>Sign in with Google or email. Two-factor authentication keeps your account secure.</p>
                     </div>
                 </div>
                 <div className="auth-form-wrapper">

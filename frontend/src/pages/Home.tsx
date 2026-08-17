@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import MapView from "../components/MapView";
-import GuestAccessPrompt from "../components/GuestAccessPrompt";
 import HeroVisualGallery from "../components/HeroVisualGallery";
 import PlatformStatsBar from "../components/PlatformStatsBar";
 import MapLegend from "../components/MapLegend";
@@ -98,7 +97,6 @@ export default function Home() {
                             <Link to="/register" className="btn-primary">Get Started Free</Link>
                             <Link to="/login" className="btn-outline">Sign In</Link>
                         </div>
-                        <GuestAccessPrompt variant="hero" />
                     </div>
                     <HeroVisualGallery activeType={typeFilter} onTypeSelect={handleTypeSelect} />
                 </div>
