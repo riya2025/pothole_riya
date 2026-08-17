@@ -39,16 +39,18 @@ function ClerkLoginPanel() {
 
     return (
         <ClerkSignedInGate mode="login">
-            <div className="clerk-auth-container">
-                <SignIn
-                    routing="path"
-                    path="/login"
-                    signUpUrl="/register"
-                    fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
-                    appearance={clerkAppearance}
-                />
+            <div className="auth-form-stack">
+                <div className="clerk-auth-container">
+                    <SignIn
+                        routing="path"
+                        path="/login"
+                        signUpUrl="/register"
+                        fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                        appearance={clerkAppearance}
+                    />
+                </div>
+                <GuestAccessPrompt />
             </div>
-            <GuestAccessPrompt />
         </ClerkSignedInGate>
     );
 }
