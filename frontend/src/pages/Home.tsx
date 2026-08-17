@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import MapView from "../components/MapView";
-import SkipLoginButton from "../components/SkipLoginButton";
+import GuestAccessPrompt from "../components/GuestAccessPrompt";
 import HeroVisualGallery from "../components/HeroVisualGallery";
 import PlatformStatsBar from "../components/PlatformStatsBar";
 import MapLegend from "../components/MapLegend";
@@ -97,11 +97,8 @@ export default function Home() {
                         <div className="hero-actions">
                             <Link to="/register" className="btn-primary">Get Started Free</Link>
                             <Link to="/login" className="btn-outline">Sign In</Link>
-                            <SkipLoginButton
-                                className="btn-outline hero-skip-btn"
-                                label="Continue without signing in"
-                            />
                         </div>
+                        <GuestAccessPrompt variant="hero" />
                     </div>
                     <HeroVisualGallery activeType={typeFilter} onTypeSelect={handleTypeSelect} />
                 </div>

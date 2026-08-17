@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
 import { useClerkSession } from "../hooks/useClerkSession";
 import ClerkSignedInGate from "../components/ClerkSignedInGate";
+import GuestAccessPrompt from "../components/GuestAccessPrompt";
 
 function ClerkRegisterPanel() {
     const { isLoaded: clerkLoaded } = useClerkSession();
@@ -28,6 +29,7 @@ function ClerkRegisterPanel() {
                     appearance={clerkAppearance}
                 />
             </div>
+            <GuestAccessPrompt />
         </ClerkSignedInGate>
     );
 }
@@ -111,6 +113,7 @@ export default function Register() {
                                 </button>
                             </form>
                             <p className="auth-switch">Already have an account? <Link to="/login">Sign In</Link></p>
+                            <GuestAccessPrompt />
                         </div>
                     )}
                 </div>

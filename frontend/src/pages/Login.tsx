@@ -8,7 +8,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { CLERK_AFTER_AUTH_URL, clerkAppearance, isClerkEnabled } from "../config/clerk";
 import { useClerkSession } from "../hooks/useClerkSession";
 import ClerkSignedInGate from "../components/ClerkSignedInGate";
-import SkipLoginButton from "../components/SkipLoginButton";
+import GuestAccessPrompt from "../components/GuestAccessPrompt";
 
 function ClerkLoginPanel() {
     const { user, clerkSyncing } = useContext(AuthContext);
@@ -48,7 +48,7 @@ function ClerkLoginPanel() {
                     appearance={clerkAppearance}
                 />
             </div>
-            <SkipLoginButton />
+            <GuestAccessPrompt />
         </ClerkSignedInGate>
     );
 }
@@ -95,7 +95,7 @@ function LegacyLoginForm() {
                 </button>
             </form>
             <p className="auth-switch">Don't have an account? <Link to="/register">Sign Up</Link></p>
-            <SkipLoginButton />
+            <GuestAccessPrompt />
         </div>
     );
 }
@@ -108,7 +108,7 @@ export default function Login() {
                     <div className="graphic-content">
                         <span className="graphic-icon">📍</span>
                         <h1>CivicWatch</h1>
-                        <p>Sign in with Google or email. Two-factor authentication keeps your account secure.</p>
+                        <p>Sign in with Google or email, or explore the map right away — no account required.</p>
                     </div>
                 </div>
                 <div className="auth-form-wrapper">
