@@ -7,7 +7,6 @@ import PlatformStatsBar from "../components/PlatformStatsBar";
 import MapLegend from "../components/MapLegend";
 import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
-import { PlusIcon } from "../components/CaptureIcons";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor, normalizeIssueType } from "../utils/helpers";
 import { CITIES, CITY_CENTERS, CITY_ZOOM, ISSUE_TYPES, CityValue } from "../config/filters";
@@ -111,11 +110,11 @@ export default function Home() {
                             <Link to="/register" className="btn-primary">Get Started Free</Link>
                             <button
                                 type="button"
-                                className="btn-outline hero-report-btn"
+                                className="hero-report-btn"
                                 onClick={handleAddIssue}
                             >
-                                <PlusIcon size={18} />
-                                Report
+                                <span className="hero-report-plus" aria-hidden="true">+</span>
+                                <span className="hero-report-text">Report an issue</span>
                             </button>
                         </div>
                     </div>
