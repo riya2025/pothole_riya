@@ -114,7 +114,10 @@ export default function Home() {
                                 onClick={handleAddIssue}
                             >
                                 <span className="hero-report-plus" aria-hidden="true">+</span>
-                                <span className="hero-report-text">Report an issue</span>
+                                <span className="hero-report-copy">
+                                    <span className="hero-report-text">Report it now</span>
+                                    <span className="hero-report-hint">Snap. Pin. Done.</span>
+                                </span>
                             </button>
                         </div>
                     </div>
