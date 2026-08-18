@@ -13,7 +13,7 @@ function KebabIcon() {
 }
 
 export default function Navbar() {
-    const { user, logout, isGuest, exitGuestMode } = useContext(AuthContext);
+    const { user, logout, isGuest } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,12 +32,6 @@ export default function Navbar() {
     const handleLogout = () => {
         logout();
         setIsMenuOpen(false);
-    };
-
-    const handleExitGuest = () => {
-        exitGuestMode();
-        setIsMenuOpen(false);
-        navigate("/");
     };
 
     const showAppNav = user || isGuest;
@@ -89,12 +83,6 @@ export default function Navbar() {
                         <span className="user-badge">👤 {user.name || `User #${user.id}`}</span>
                         <button className="btn-outline" onClick={handleLogout}>Logout</button>
                     </div>
-                ) : isGuest ? (
-                    <div className="user-menu">
-                        <span className="user-badge">Guest</span>
-                        <Link to="/login" className="btn-primary">Sign In</Link>
-                        <button className="btn-outline" onClick={handleExitGuest}>Exit</button>
-                    </div>
                 ) : (
                     <div className="auth-buttons">
                         <Link to="/login" className="btn-outline">Login</Link>
@@ -133,11 +121,6 @@ export default function Navbar() {
                             <button className="kebab-dropdown-item danger" onClick={handleLogout}>
                                 Logout
                             </button>
-                        ) : isGuest ? (
-                            <>
-                                <Link to="/login" className="kebab-dropdown-item primary" onClick={closeMenu}>Sign In</Link>
-                                <button className="kebab-dropdown-item" onClick={handleExitGuest}>Exit guest mode</button>
-                            </>
                         ) : (
                             <>
                                 <Link to="/login" className="kebab-dropdown-item" onClick={closeMenu}>Login</Link>
