@@ -3,6 +3,7 @@ import { SignUp } from "@clerk/clerk-react";
 import { register } from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import { isClerkEnabled, clerkAppearance, CLERK_AFTER_AUTH_URL } from "../config/clerk";
+import { peekAfterAuthPath } from "../utils/authSession";
 import { useClerkSession } from "../hooks/useClerkSession";
 import ClerkSignedInGate from "../components/ClerkSignedInGate";
 import GuestAccessPrompt from "../components/GuestAccessPrompt";
@@ -26,7 +27,7 @@ function ClerkRegisterPanel() {
                         routing="path"
                         path="/register"
                         signInUrl="/login"
-                        fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                        fallbackRedirectUrl={peekAfterAuthPath(CLERK_AFTER_AUTH_URL)}
                         appearance={clerkAppearance}
                     />
                 </div>

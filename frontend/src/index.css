@@ -1265,6 +1265,48 @@ a:hover {
   flex-shrink: 0;
 }
 
+.home-report-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s, width 0.2s, border-radius 0.2s, padding 0.2s;
+}
+
+.home-report-fab-label {
+  display: none;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.home-report-fab:hover,
+.home-report-fab:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(99, 102, 241, 0.55);
+}
+
+.home-report-fab:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 3px;
+}
+
 .user-map-quick-btn,
 .user-map-full-btn {
   white-space: nowrap;
@@ -3759,6 +3801,20 @@ a:hover {
     bottom: 16px;
     right: 16px;
     left: 16px;
+  }
+
+  .home-report-fab {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    height: 52px;
+    padding: 0 18px 0 14px;
+    border-radius: 999px;
+  }
+
+  .home-report-fab-label {
+    display: inline;
+    max-width: none;
   }
 
   .user-map-full-btn {

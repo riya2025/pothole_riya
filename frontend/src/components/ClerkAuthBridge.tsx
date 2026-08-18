@@ -9,6 +9,7 @@ import {
     clearAuthSession,
     hasValidSessionForClerk,
     hydrateUserFromToken,
+    peekAfterAuthPath,
     persistAuthSession,
 } from "../utils/authSession";
 
@@ -101,7 +102,7 @@ export default function ClerkAuthBridge() {
                 syncedClerkIdRef.current = clerkUser.id;
                 setUser(nextUser);
                 if (authPath) {
-                    navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+                    navigate(peekAfterAuthPath(CLERK_AFTER_AUTH_URL), { replace: true });
                 }
             })
             .catch((err) => {

@@ -1,22 +1,27 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../App";
 import MapView from "../components/MapView";
 import HeroVisualGallery from "../components/HeroVisualGallery";
 import PlatformStatsBar from "../components/PlatformStatsBar";
 import MapLegend from "../components/MapLegend";
 import FilterSelect from "../components/FilterSelect";
 import IssueDetailModal from "../components/IssueDetailModal";
+import { PlusIcon } from "../components/CaptureIcons";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor, normalizeIssueType } from "../utils/helpers";
 import { CITIES, CITY_CENTERS, CITY_ZOOM, ISSUE_TYPES, CityValue } from "../config/filters";
 import { MapFocusPoint } from "../utils/helpers";
 import { Issue } from "../types";
 import { useAutoDetectCity } from "../hooks/useAutoDetectCity";
+import { REPORT_PATH, setAfterAuthPath } from "../utils/authSession";
 
 const cityOptions = CITIES.map((c) => ({ value: c.value, label: c.label }));
 const typeOptions = ISSUE_TYPES.map((t) => ({ value: t.value, label: t.label }));
 
 export default function Home() {
+    const { user, isGuest } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [issues, setIssues] = useState<Issue[]>([]);
     const [loading, setLoading] = useState(true);
     const [typeFilter, setTypeFilter] = useState("all");
@@ -78,6 +83,15 @@ export default function Home() {
     const handleViewDetails = (issue: Issue) => {
         setSelectedId(issue.id);
         setDetailId(issue.id);
+    };
+
+    const handleAddIssue = () => {
+        if (user || isGuest) {
+            navigate(REPORT_PATH);
+            return;
+        }
+        setAfterAuthPath(REPORT_PATH);
+        navigate("/login");
     };
 
     return (
@@ -273,6 +287,16 @@ export default function Home() {
             </div>
 
             <IssueDetailModal issueId={detailId} onClose={() => setDetailId(null)} />
+
+            <button
+                type="button"
+                className="home-report-fab"
+                onClick={handleAddIssue}
+                aria-label="Report an issue"
+            >
+                <PlusIcon className="home-report-fab-icon" size={26} />
+                <span className="home-report-fab-label">Report</span>
+            </button>
         </div>
     );
 }

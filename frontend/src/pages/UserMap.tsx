@@ -10,6 +10,7 @@ import { PlusIcon } from "../components/CaptureIcons";
 import { getAllIssues } from "../services/api";
 import { issueIcon, issueColor, filterWithinRadius, haversineM } from "../utils/helpers";
 import { Issue } from "../types";
+import { consumeAfterAuthPath, REPORT_PATH, setAfterAuthPath } from "../utils/authSession";
 
 const RADIUS_M = 20;
 const MAP_ZOOM = 18;
@@ -58,14 +59,24 @@ function UserMapContent({
     }, [searchParams, setSearchParams]);
 
     useEffect(() => {
+        consumeAfterAuthPath();
+    }, []);
+
+    useEffect(() => {
         if (isGuest) return;
         if (!isClerkEnabled) {
-            if (!user) navigate("/login");
+            if (!user) {
+                if (searchParams.get("report") === "1") setAfterAuthPath(REPORT_PATH);
+                navigate("/login");
+            }
             return;
         }
         if (!clerkLoaded || clerkSyncing) return;
-        if (!user && !isSignedIn) navigate("/login");
-    }, [user, navigate, clerkLoaded, clerkSyncing, isSignedIn, isGuest]);
+        if (!user && !isSignedIn) {
+            if (searchParams.get("report") === "1") setAfterAuthPath(REPORT_PATH);
+            navigate("/login");
+        }
+    }, [user, navigate, clerkLoaded, clerkSyncing, isSignedIn, isGuest, searchParams]);
 
     useEffect(() => {
         getAllIssues()

@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../App";
 import { CLERK_AFTER_AUTH_URL } from "../config/clerk";
+import { peekAfterAuthPath } from "../utils/authSession";
 
 export default function GuestAccessPrompt() {
     const { enterGuestMode } = useContext(AuthContext);
@@ -9,7 +10,7 @@ export default function GuestAccessPrompt() {
 
     const handleSkip = () => {
         enterGuestMode();
-        navigate(CLERK_AFTER_AUTH_URL);
+        navigate(peekAfterAuthPath(CLERK_AFTER_AUTH_URL));
     };
 
     return (

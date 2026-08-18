@@ -3,7 +3,7 @@ import { SignIn } from "@clerk/clerk-react";
 import { login } from "../services/api";
 import { AuthContext } from "../App";
 import { parseJwt } from "../utils/helpers";
-import { persistAuthSession } from "../utils/authSession";
+import { persistAuthSession, peekAfterAuthPath } from "../utils/authSession";
 import { useNavigate, Link } from "react-router-dom";
 import { CLERK_AFTER_AUTH_URL, clerkAppearance, isClerkEnabled } from "../config/clerk";
 import { useClerkSession } from "../hooks/useClerkSession";
@@ -16,7 +16,7 @@ function ClerkLoginPanel() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (user) navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+        if (user) navigate(peekAfterAuthPath(CLERK_AFTER_AUTH_URL), { replace: true });
     }, [user, navigate]);
 
     if (user) {
@@ -45,7 +45,7 @@ function ClerkLoginPanel() {
                         routing="path"
                         path="/login"
                         signUpUrl="/register"
-                        fallbackRedirectUrl={CLERK_AFTER_AUTH_URL}
+                        fallbackRedirectUrl={peekAfterAuthPath(CLERK_AFTER_AUTH_URL)}
                         appearance={clerkAppearance}
                     />
                 </div>
@@ -72,7 +72,7 @@ function LegacyLoginForm() {
             const nextUser = { id: Number(payload?.sub), name: email.split("@")[0], email };
             persistAuthSession(nextUser, "legacy", res.data.access_token);
             setUser(nextUser);
-            navigate(CLERK_AFTER_AUTH_URL);
+            navigate(peekAfterAuthPath(CLERK_AFTER_AUTH_URL));
         } catch {
             setError("Invalid email or password.");
         } finally { setLoading(false); }

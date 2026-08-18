@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { AuthContext } from "../App";
 import { useClerkSession } from "../hooks/useClerkSession";
 import { CLERK_AFTER_AUTH_URL } from "../config/clerk";
-import { clearAuthSession } from "../utils/authSession";
+import { clearAuthSession, peekAfterAuthPath } from "../utils/authSession";
 
 type Props = {
     mode: "login" | "register";
@@ -21,7 +21,7 @@ export default function ClerkSignedInGate({ mode, children }: Props) {
     const [switching, setSwitching] = useState(false);
 
     useEffect(() => {
-        if (user) navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+        if (user) navigate(peekAfterAuthPath(CLERK_AFTER_AUTH_URL), { replace: true });
     }, [user, navigate]);
 
     if (user) {
@@ -61,7 +61,7 @@ export default function ClerkSignedInGate({ mode, children }: Props) {
     const title = mode === "register" ? "Already signed in" : "Welcome back";
 
     const handleContinue = () => {
-        navigate(CLERK_AFTER_AUTH_URL, { replace: true });
+        navigate(peekAfterAuthPath(CLERK_AFTER_AUTH_URL), { replace: true });
     };
 
     const handleSwitchAccount = async () => {

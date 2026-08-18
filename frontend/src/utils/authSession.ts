@@ -4,6 +4,9 @@ import { parseJwt } from "./helpers";
 const CLERK_ID_KEY = "clerk_user_id";
 const PROFILE_KEY = "cw_user";
 const GUEST_MODE_KEY = "cw_guest_mode";
+const AFTER_AUTH_KEY = "cw_after_auth";
+export const REPORT_PATH = "/map?report=1";
+const ALLOWED_AFTER_AUTH = new Set(["/map", REPORT_PATH]);
 
 export function isGuestMode(): boolean {
     return sessionStorage.getItem(GUEST_MODE_KEY) === "1";
@@ -15,6 +18,24 @@ export function enableGuestMode() {
 
 export function disableGuestMode() {
     sessionStorage.removeItem(GUEST_MODE_KEY);
+}
+
+export function setAfterAuthPath(path: string) {
+    if (ALLOWED_AFTER_AUTH.has(path)) {
+        sessionStorage.setItem(AFTER_AUTH_KEY, path);
+    }
+}
+
+export function peekAfterAuthPath(fallback = "/map"): string {
+    const raw = sessionStorage.getItem(AFTER_AUTH_KEY);
+    if (raw && ALLOWED_AFTER_AUTH.has(raw)) return raw;
+    return fallback;
+}
+
+export function consumeAfterAuthPath(fallback = "/map"): string {
+    const next = peekAfterAuthPath(fallback);
+    sessionStorage.removeItem(AFTER_AUTH_KEY);
+    return next;
 }
 
 export function getStoredProfile(): User | null {
