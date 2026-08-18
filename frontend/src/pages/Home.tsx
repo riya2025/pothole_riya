@@ -109,7 +109,14 @@ export default function Home() {
                         </p>
                         <div className="hero-actions">
                             <Link to="/register" className="btn-primary">Get Started Free</Link>
-                            <Link to="/login" className="btn-outline">Sign In</Link>
+                            <button
+                                type="button"
+                                className="btn-outline hero-report-btn"
+                                onClick={handleAddIssue}
+                            >
+                                <PlusIcon size={18} />
+                                Report
+                            </button>
                         </div>
                     </div>
                     <HeroVisualGallery activeType={typeFilter} onTypeSelect={handleTypeSelect} />
@@ -287,16 +294,6 @@ export default function Home() {
             </div>
 
             <IssueDetailModal issueId={detailId} onClose={() => setDetailId(null)} />
-
-            <button
-                type="button"
-                className="home-report-fab"
-                onClick={handleAddIssue}
-                aria-label="Report an issue"
-            >
-                <PlusIcon className="home-report-fab-icon" size={26} />
-                <span className="home-report-fab-label">Report</span>
-            </button>
         </div>
     );
 }
