@@ -16,3 +16,4 @@ imageio==2.37.4
 imageio-ffmpeg==0.5.1
 Pillow>=10.0.0
 numpy>=1.26.0
+psycopg[binary]
